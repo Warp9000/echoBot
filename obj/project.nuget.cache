@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "S9/YEUpHtEJolOV3/kFYhE9CRtfBu9BPmLjDnkoTMfol7DtZyUFm9ldxXMcr79qKCZfS+CqqoMQ4MMIvW4rmHA==",
+  "dgSpecHash": "2xCNSX+1RZfFvV9bG6Ghji1b851Wqdc9snASFQ63qmIIVItE/KyIkFXlloktEWXVN5fQssxAzjwaKXMyDq0cxA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj",
+  "projectFilePath": "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Warp\\.nuget\\packages\\discord.net\\3.6.1\\discord.net.3.6.1.nupkg.sha512",
     "C:\\Users\\Warp\\.nuget\\packages\\discord.net.commands\\3.6.1\\discord.net.commands.3.6.1.nupkg.sha512",

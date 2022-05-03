@@ -1,20 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj": {}
+    "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj": {
+    "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj",
+        "projectUniqueName": "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj",
         "projectName": "DiscordBot",
-        "projectPath": "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj",
+        "projectPath": "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj",
         "packagesPath": "C:\\Users\\Warp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\obj\\",
+        "outputPath": "C:\\Users\\Warp\\Documents\\repos\\echoBot\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\Warp\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Warp\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net6.0"
@@ -41,6 +46,10 @@
             "Discord.Net": {
               "target": "Package",
               "version": "[3.6.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
             }
           },
           "imports": [

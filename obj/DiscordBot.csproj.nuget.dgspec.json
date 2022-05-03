@@ -1,25 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj": {}
+    "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj": {
+    "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj",
+        "projectUniqueName": "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj",
         "projectName": "DiscordBot",
-        "projectPath": "C:\\Users\\Warp\\Documents\\repos\\echoBot\\DiscordBot.csproj",
+        "projectPath": "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\DiscordBot.csproj",
         "packagesPath": "C:\\Users\\Warp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Warp\\Documents\\repos\\echoBot\\obj\\",
+        "outputPath": "C:\\Users\\Warp\\Documents\\repos\\DiscordBot\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Warp\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\Warp\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net6.0"
@@ -68,6 +63,11 @@
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

@@ -16,6 +16,10 @@ namespace echoBot
             e.Description = "Description";
             e.ImageUrl = "https://warp.tf/i/1sthq.png";
             e.ThumbnailUrl = "https://warp.tf/i/9hukc.png";
+            e.Url = "https://warp.tf";
+            e.AddField("Field1", "FieldValue1");
+            e.AddField("Field2", "FieldValue2");
+            await ReplyAsync("", false, e.Build());
         }
     }
     // Keep in mind your module **must** be public and inherit ModuleBase.
@@ -61,13 +65,52 @@ namespace echoBot
             [Summary("The (optional) user to get info from")]
             Discord.WebSocket.SocketUser? user = null)
         {
-            var userInfo = user ?? Context.User;
-            l.Debug(userInfo.ToString(), "UserInfoAsync");
-            await ReplyAsync($"{userInfo.Username}#{userInfo.Discriminator}\n" +
-                $"User ID: {userInfo.Id}\n" +
-                $"Status: {userInfo.Status}\n" +
-                // $"Game: {userInfo.Activities.First().Name}\n" + 
-                $"Avatar: {userInfo.GetAvatarUrl()}");
+            var userInfo = user  ?? Context.User;
+            var eUserInfo = userInfo as Discord.WebSocket.SocketGuildUser;
+            l.Debug(userInfo.Username + "#" + userInfo.Discriminator, "UserInfoAsync");
+            Color c = new Color(0, 0, 0);
+            switch (eUserInfo.Status)
+            {
+                case UserStatus.Online:
+                    c = new Color(59, 165, 93);
+                    break;
+                case UserStatus.Idle:
+                    c = new Color(250, 168, 26);
+                    break;
+                case UserStatus.DoNotDisturb:
+                    c = new Color(237, 66, 69);
+                    break;
+                case UserStatus.Offline:
+                    c = new Color(116, 127, 141);
+                    break;
+                default:
+                    c = new Color(255, 0, 255);
+                    break;
+            }
+
+            var e = new EmbedBuilder();
+            e.Color = c;
+            // e.Title = userInfo.Username + "#" + userInfo.Discriminator;
+            e.Description = userInfo.Mention;
+            e.ThumbnailUrl = userInfo.GetAvatarUrl();
+            e.AddField("Joined", eUserInfo.JoinedAt, true);
+            e.AddField("Created", userInfo.CreatedAt, true);
+            var fb = new EmbedFieldBuilder();
+            foreach (var item in eUserInfo.Roles)
+            {
+                fb.Value += $"<@&{item.Id}>, ";
+            }
+            e.AddField(eUserInfo.Roles.Count + " Roles", fb.Build().Value.TrimEnd(',', ' '));
+            e.Footer = new EmbedFooterBuilder
+            {
+                Text = "ID:" + userInfo.Id.ToString() + " | " + DateTime.UtcNow + " UTC | " + "echoBot"
+            };
+            e.Author = new EmbedAuthorBuilder
+            {
+                Name = userInfo.Username + "#" + userInfo.Discriminator,
+                IconUrl = userInfo.GetAvatarUrl()
+            };
+            await ReplyAsync("", false, e.Build());
         }
     }
 }

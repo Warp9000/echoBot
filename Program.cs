@@ -26,7 +26,8 @@ public class Program
         {
             AlwaysDownloadUsers = true,
             MessageCacheSize = 250,
-            LogLevel = LogSeverity.Debug,
+            LogLevel = LogSeverity.Info,
+            GatewayIntents = GatewayIntents.All
         };
         _client = new Discord.WebSocket.DiscordSocketClient(config);
 
@@ -45,10 +46,18 @@ public class Program
 
         await _client.LoginAsync(TokenType.Bot, Config.token);
         await _client.StartAsync();
-        await _client.SetGameAsync(Config.game);
+        await _client.SetActivityAsync(new Game(Config.game, ActivityType.Watching, details: "https://warp.tf/"));
+        // await _client.SetGameAsync(Config.game);
         await _client.SetStatusAsync((UserStatus)Enum.Parse(typeof(UserStatus), Config.status));
 
-        var ch = new echoBot.CommandHandler(_client, new CommandService());
+        CommandServiceConfig csc = new CommandServiceConfig
+        {
+            CaseSensitiveCommands = false,
+            // DefaultRunMode = RunMode.Async,
+            LogLevel = config.LogLevel
+        };
+
+        var ch = new echoBot.CommandHandler(_client, new CommandService(csc));
         await ch.InstallCommandsAsync();
 
         // Block this task until the program is closed.

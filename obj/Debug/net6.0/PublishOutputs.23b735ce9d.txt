@@ -1,0 +1,16 @@
+C:\Users\Warp\Desktop\Publish\DiscordBot.exe
+C:\Users\Warp\Desktop\Publish\DiscordBot.dll
+C:\Users\Warp\Desktop\Publish\DiscordBot.deps.json
+C:\Users\Warp\Desktop\Publish\DiscordBot.runtimeconfig.json
+C:\Users\Warp\Desktop\Publish\DiscordBot.pdb
+C:\Users\Warp\Desktop\Publish\Discord.Net.Commands.dll
+C:\Users\Warp\Desktop\Publish\Discord.Net.Core.dll
+C:\Users\Warp\Desktop\Publish\Discord.Net.Interactions.dll
+C:\Users\Warp\Desktop\Publish\Discord.Net.Rest.dll
+C:\Users\Warp\Desktop\Publish\Discord.Net.Webhook.dll
+C:\Users\Warp\Desktop\Publish\Discord.Net.WebSocket.dll
+C:\Users\Warp\Desktop\Publish\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\Warp\Desktop\Publish\Newtonsoft.Json.dll
+C:\Users\Warp\Desktop\Publish\System.Interactive.Async.dll
+C:\Users\Warp\Desktop\Publish\System.Linq.Async.dll
+C:\Users\Warp\Desktop\Publish\System.Reactive.dll

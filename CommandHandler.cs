@@ -41,9 +41,8 @@ namespace echoBot
 
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
-
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
-            if (!(message.HasCharPrefix('!', ref argPos) ||
+            if (!(message.HasStringPrefix(Program.Config.prefix, ref argPos) ||
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;

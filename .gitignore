@@ -2,3 +2,4 @@ Publish/
 Publish.bat
 bin/
 obj/
+config.json

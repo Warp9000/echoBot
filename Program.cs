@@ -4,27 +4,33 @@ using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
 
-public class JsonConfig
+public class GlobalConfig
 {
     public string token { get; set; } = "";
-    public string prefix { get; set; } = "!";
+    public string gPrefix { get; set; } = ";;";
     public string status { get; set; } = "";
     public string game { get; set; } = "";
+}
+public class ServerConfig
+{
+    public ulong id { get; set; } = 0;
+    public string prefix { get; set; } = ";;";
+    public ulong logChannel { get; set; } = 0;
 }
 public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
-    public static string version = "0.0.2 Dev";
-    private Discord.WebSocket.DiscordSocketClient? _client;
+    public static string version = "0.0.3 Dev";
+    public static Discord.WebSocket.DiscordSocketClient? _client;
     public static Discord.WebSocket.DiscordSocketConfig config = new Discord.WebSocket.DiscordSocketConfig();
-    public static JsonConfig Config = new JsonConfig();
+    public static GlobalConfig Config = new GlobalConfig();
     public static DateTime startTime = DateTime.Now;
-    public static EmbedBuilder DefaultEmbed = new EmbedBuilder();
     public static int Commands = 0;
     public static ulong Warp = 408615875252322305;
+    public static List<ServerConfig>? ServerConfigs = new List<ServerConfig>();
     public async Task MainAsync()
     {
-        Config = JsonConvert.DeserializeObject<JsonConfig>(File.ReadAllText("config.json"));
+        Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("config.json"));
         config = new Discord.WebSocket.DiscordSocketConfig
         {
             AlwaysDownloadUsers = true,
@@ -62,19 +68,85 @@ public class Program
 
         var ch = new echoBot.CommandHandler(_client, new CommandService(csc));
         await ch.InstallCommandsAsync();
-        DefaultEmbed = new EmbedBuilder().WithColor(Color.DarkPurple).WithCurrentTimestamp().WithFooter(new EmbedFooterBuilder()
+        if (File.Exists("servers.json"))
+            ServerConfigs = JsonConvert.DeserializeObject<List<ServerConfig>>(File.ReadAllText("servers.json"));
+        List<ulong> servers = new List<ulong>();
+        foreach (var server in _client.Guilds)
         {
-            Text = $"echoBot {version}",
-            IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096"
-        });
+            servers.Clear();
+            for (var i = 0; i < ServerConfigs.Count; i++)
+            {
+                servers.Add(ServerConfigs[i].id);
+            }
+            l.Info($"Adding server {server.Name} to config", "MainAsync");
+            if (!servers.Contains(server.Id))
+                ServerConfigs.Add(new ServerConfig
+                {
+                    id = server.Id,
+                    prefix = Config.gPrefix,
+                    logChannel = 0
+                });
+
+        }
+        File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+
+        // console commands
+        while (true)
+        {
+            string input = Console.ReadLine();
+            switch (input)
+            {
+                case "exit":
+                    File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+                    Task.Delay(1000).Wait();
+                    Environment.Exit(0);
+                    break;
+                case "reload":
+                    Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("config.json"));
+                    break;
+                case "save":
+                    File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+                    break;
+                case "help":
+                    Console.WriteLine("exit - exits the program");
+                    Console.WriteLine("reload - reloads the config");
+                    Console.WriteLine("save - saves the config");
+                    Console.WriteLine("help - shows this message");
+                    break;
+                default:
+                    Console.WriteLine("Unknown command. Use 'help' to see a list of commands.");
+                    break;
+            }
+        }
 
         // Block this task until the program is closed.
-        await Task.Delay(-1);
+        // await Task.Delay(-1);
     }
     public Task Log(LogMessage msg)
     {
         l.Log(msg);
         return Task.CompletedTask;
+    }
+    public static EmbedBuilder DefaultEmbed()
+    {
+        return new EmbedBuilder().WithColor(Color.DarkPurple).WithCurrentTimestamp().WithFooter(new EmbedFooterBuilder()
+        {
+            Text = $"echoBot {version}",
+            IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096"
+        });
+    }
+    public static ServerConfig GetServerConfig(ulong id)
+    {
+        foreach (var server in ServerConfigs)
+        {
+            if (server.id == id)
+                return server;
+        }
+        return null;
+    }
+    public static ITextChannel GetLogChannel(ulong id)
+    {
+        return _client.GetChannel(id) as ITextChannel;
     }
 }
 public class l
@@ -82,7 +154,7 @@ public class l
     public static void Log(LogMessage msg)
     {
         if (msg.Severity <= Program.config.LogLevel)
-            Console.WriteLine($"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message}");
+            Console.WriteLine($"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message} {msg.Exception}");
     }
     public static void Debug(string msg, string source = "?")
     {

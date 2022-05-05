@@ -44,13 +44,13 @@ namespace echoBot
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
-            if (!(message.HasStringPrefix(Program.Config.prefix, ref argPos) ||
-                message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
-                message.Author.IsBot)
+            if (message.Author.IsBot)
+                return;
+            if (!message.HasStringPrefix(Program.Config.gPrefix, ref argPos) && !message.HasStringPrefix(Program.GetServerConfig(new SocketCommandContext(_client, message).Guild.Id).prefix, ref argPos))
                 return;
 
             l.Verbose($"\"{messageParam.Content}\" sent by {messageParam.Author.Username + "#" + messageParam.Author.Discriminator} in #{messageParam.Channel.Name}({messageParam.Channel.Id})", "CommandHandler");
-            
+
             // Create a WebSocket-based command context based on the message
             var context = new SocketCommandContext(_client, message);
 
@@ -68,7 +68,8 @@ namespace echoBot
         }
         public static EmbedFooterBuilder GetFooter()
         {
-            var fb = new EmbedFooterBuilder(){
+            var fb = new EmbedFooterBuilder()
+            {
                 Text = $"echoBot {Program.version}",
                 IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096"
             };

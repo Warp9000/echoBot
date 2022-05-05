@@ -14,11 +14,13 @@ public class JsonConfig
 public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
-    public static string version = "0.0.1 Dev";
+    public static string version = "0.0.2 Dev";
     private Discord.WebSocket.DiscordSocketClient? _client;
     public static Discord.WebSocket.DiscordSocketConfig config = new Discord.WebSocket.DiscordSocketConfig();
     public static JsonConfig Config = new JsonConfig();
-
+    public static DateTime startTime = DateTime.Now;
+    public static EmbedBuilder DefaultEmbed = new EmbedBuilder();
+    public static int Commands = 0;
     public async Task MainAsync()
     {
         Config = JsonConvert.DeserializeObject<JsonConfig>(File.ReadAllText("config.json"));
@@ -59,6 +61,11 @@ public class Program
 
         var ch = new echoBot.CommandHandler(_client, new CommandService(csc));
         await ch.InstallCommandsAsync();
+        DefaultEmbed = new EmbedBuilder().WithColor(Color.DarkPurple).WithCurrentTimestamp().WithFooter(new EmbedFooterBuilder()
+        {
+            Text = $"echoBot {version}",
+            IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096"
+        });
 
         // Block this task until the program is closed.
         await Task.Delay(-1);
@@ -74,7 +81,7 @@ public class l
     public static void Log(LogMessage msg)
     {
         if (msg.Severity <= Program.config.LogLevel)
-        Console.WriteLine($"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message}");
+            Console.WriteLine($"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message}");
     }
     public static void Debug(string msg, string source = "?")
     {

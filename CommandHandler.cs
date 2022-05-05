@@ -31,6 +31,8 @@ namespace echoBot
             // See Dependency Injection guide for more information.
             await _commands.AddModulesAsync(assembly: System.Reflection.Assembly.GetEntryAssembly(),
                                             services: null);
+
+            Program.Commands = _commands.Commands.Count();
         }
 
         private async Task HandleCommandAsync(Discord.WebSocket.SocketMessage messageParam)

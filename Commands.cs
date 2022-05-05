@@ -1,3 +1,4 @@
+using System.Globalization;
 using Discord;
 using Discord.Commands;
 using System.IO;
@@ -95,8 +96,60 @@ namespace echoBot
             // e.AddField("Field2", "FieldValue2");
             await ReplyAsync("", false, e.Build());
         }
+        [Command("ping")]
+        [Summary("Returns the bot's ping")]
+        [Alias("pong")]
+        public async Task PingAsync()
+        {
+            var e = new EmbedBuilder();
+            e.Color = Color.DarkPurple;
+            if (Context.Message.Content.StartsWith(Program.Config.prefix + "ping", true, null))
+                e.Title = "Pong!";
+            else
+                e.Title = "Ping!";
+            e.Description = $"{Context.Client.Latency}ms";
+            e.Footer = CommandHandler.GetFooter();
+            e.WithCurrentTimestamp();
+            await ReplyAsync("", false, e.Build());
+        }
+        [Command("uptime")]
+        [Summary("Returns the bot's uptime")]
+        [Alias("up")]
+        public async Task UptimeAsync()
+        {
+            var e = Program.DefaultEmbed;
+            e.Title = "Uptime";
+            var u = DateTime.Now - Program.startTime;
+            if (u.Days > 0)
+                e.Description += $"{u.Days} days, {u.Hours} hours, {u.Minutes} minutes, {u.Seconds} seconds";
+            else if (u.Hours > 0)
+                e.Description += $"{u.Hours} hours, {u.Minutes} minutes, {u.Seconds} seconds";
+            else if (u.Minutes > 0)
+                e.Description += $"{u.Minutes} minutes, {u.Seconds} seconds";
+            else
+                e.Description += $"{u.Seconds} seconds";
+            await ReplyAsync("", false, e.Build());
+        }
+        [Command("stats")]
+        [Summary("Returns the bot's stats")]
+        public async Task StatsAsync()
+        {
+            var e = Program.DefaultEmbed;
+            e.Title = "Stats";
+            e.AddField("Guilds", Context.Client.Guilds.Count, true);
+            e.AddField("Users", Context.Client.Guilds.Sum(x => x.Users.Count), true);
+            e.AddField("Channels", Context.Client.Guilds.Sum(x => x.Channels.Count), false);
+            e.AddField("Commands", Program.Commands, true);
+            await ReplyAsync("", false, e.Build());
+        }
+    }
 
 
+
+    [Name("Users")]
+    [Summary("Users Commands")]
+    public class UsersModule : ModuleBase<SocketCommandContext>
+    {
         [Command("userinfo")]
         [Summary
         ("Returns info about a user")]
@@ -126,27 +179,142 @@ namespace echoBot
                     break;
             }
 
-            var e = new EmbedBuilder();
+            var e = Program.DefaultEmbed;
             e.Color = c;
             // e.Title = userInfo.Username + "#" + userInfo.Discriminator;
             e.Description = userInfo.Mention + "\nID: " + userInfo.Id.ToString();
             e.ThumbnailUrl = userInfo.GetAvatarUrl();
-            e.AddField("Joined", eUserInfo.JoinedAt.ToString().Substring(0,19), true);
-            e.AddField("Created", userInfo.CreatedAt.ToString().Substring(0,19), true);
+            e.AddField("Joined", eUserInfo.JoinedAt.ToString().Substring(0, 19), true);
+            e.AddField("Created", userInfo.CreatedAt.ToString().Substring(0, 19), true);
             var fb = new EmbedFieldBuilder();
             foreach (var item in eUserInfo.Roles.Reverse())
             {
                 fb.Value += $"<@&{item.Id}>, ";
             }
             e.AddField(eUserInfo.Roles.Count + " Roles", fb.Build().Value.TrimEnd(',', ' '));
-            e.Footer = CommandHandler.GetFooter();
-            e.WithCurrentTimestamp();
             e.Author = new EmbedAuthorBuilder
             {
                 Name = userInfo.Username + "#" + userInfo.Discriminator,
                 IconUrl = userInfo.GetAvatarUrl()
             };
             await ReplyAsync("", false, e.Build());
+        }
+    }
+
+
+    [Name("Moderation")]
+    [Summary("Moderation Commands")]
+    public class ModerationModule : ModuleBase<SocketCommandContext>
+    {
+        [Command("kick")]
+        [Summary("Kicks a user")]
+        public async Task KickAsync([Name("[user]")][Summary("The user to kick")] Discord.WebSocket.SocketUser user, [Name("<reason>")][Summary("The reason for the kick")] string? reason = null)
+        {
+            var executor = Context.User as Discord.WebSocket.SocketGuildUser;
+            var eUserInfo = user as Discord.WebSocket.SocketGuildUser;
+            l.Debug(user.Username + "#" + user.Discriminator, "KickAsync");
+            if (executor.GuildPermissions.Has(GuildPermission.KickMembers))
+            {
+                await eUserInfo.KickAsync(reason);
+                await Task.Delay(Context.Client.Latency + 100);
+                await Context.Guild.DownloadUsersAsync();
+                if (Context.Guild.GetUser(user.Id) == null)
+                {
+                    var em = Program.DefaultEmbed;
+                    em.Color = Color.Red;
+                    em.Title = "Error";
+                    em.Description = $"Unkown error, user was not kicked";
+                    await ReplyAsync("", false, em.Build());
+                    return;
+                }
+
+                var e = Program.DefaultEmbed;
+                e.Title = "Kicked";
+                e.Color = Color.Green;
+                e.Description = $"{user.Username}#{user.Discriminator} was succesfully kicked by {executor.Username}#{executor.Discriminator}";
+                await ReplyAsync("", false, e.Build());
+            }
+            else
+            {
+                var e = Program.DefaultEmbed;
+                e.Color = Color.Red;
+                e.Title = "Error";
+                e.Description = $"{executor.Username}#{executor.Discriminator} does not have the required permissions to kick {user.Username}#{user.Discriminator}";
+                await ReplyAsync("", false, e.Build());
+            }
+        }
+
+        [Command("ban")]
+        [Summary("Bans a user")]
+        public async Task BanAsync([Name("[user]")][Summary("The user to ban")] Discord.WebSocket.SocketUser user, [Name("<reason>")][Summary("The reason for the ban")] string? reason = null, [Name("<days>")][Summary("The amount of days to delete messages for")] int? days = null)
+        {
+            var executor = Context.User as Discord.WebSocket.SocketGuildUser;
+            var eUserInfo = user as Discord.WebSocket.SocketGuildUser;
+            l.Debug(user.Username + "#" + user.Discriminator, "BanAsync");
+            if (executor.GuildPermissions.Has(GuildPermission.BanMembers))
+            {
+                await eUserInfo.BanAsync(days.GetValueOrDefault(), reason);
+                await Task.Delay(Context.Client.Latency + 100);
+                await Context.Guild.DownloadUsersAsync();
+                if (Context.Guild.GetUser(user.Id) == null)
+                {
+                    var em = Program.DefaultEmbed;
+                    em.Color = Color.Red;
+                    em.Title = "Error";
+                    em.Description = $"Unkown error, user was not banned";
+                    await ReplyAsync("", false, em.Build());
+                    return;
+                }
+
+                var e = Program.DefaultEmbed;
+                e.Title = "Banned";
+                e.Color = Color.Green;
+                e.Description = $"{user.Username}#{user.Discriminator} was succesfully banned by {executor.Username}#{executor.Discriminator}";
+                await ReplyAsync("", false, e.Build());
+            }
+            else
+            {
+                var e = Program.DefaultEmbed;
+                e.Color = Color.Red;
+                e.Title = "Error";
+                e.Description = $"{executor.Username}#{executor.Discriminator} does not have the required permissions to ban {user.Username}#{user.Discriminator}";
+                await ReplyAsync("", false, e.Build());
+            }
+        }
+
+        [Command("unban")]
+        [Summary("Unbans a user")]
+        public async Task UnbanAsync([Name("[user]")][Summary("The user to unban")] Discord.WebSocket.SocketUser user, [Name("<reason>")][Summary("The reason for the unban")] string? reason = null)
+        {
+            var executor = Context.User as Discord.WebSocket.SocketGuildUser;
+            var eUserInfo = user as IUser;
+            l.Debug(user.Username + "#" + user.Discriminator, "UnbanAsync");
+            if (executor.GuildPermissions.Has(GuildPermission.BanMembers))
+            {
+                if (Context.Guild.GetUser(user.Id) != null)
+                {
+                    var em = Program.DefaultEmbed;
+                    em.Color = Color.Red;
+                    em.Title = "Error";
+                    em.Description = $"{user.Username}#{user.Discriminator} is not banned";
+                    await ReplyAsync("", false, em.Build());
+                    return;
+                }
+                await executor.Guild.RemoveBanAsync(user);
+                var e = Program.DefaultEmbed;
+                e.Title = "Unbanned";
+                e.Color = Color.Green;
+                e.Description = $"{user.Username}#{user.Discriminator} was succesfully unbanned by {executor.Username}#{executor.Discriminator}";
+                await ReplyAsync("", false, e.Build());
+            }
+            else
+            {
+                var e = Program.DefaultEmbed;
+                e.Color = Color.Red;
+                e.Title = "Error";
+                e.Description = $"{executor.Username}#{executor.Discriminator} does not have the required permissions to unban {user.Username}#{user.Discriminator}";
+                await ReplyAsync("", false, e.Build());
+            }
         }
     }
 }

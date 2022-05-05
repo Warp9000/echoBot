@@ -5,8 +5,8 @@ namespace echoBot
 {
     public class CommandHandler
     {
-        private readonly Discord.WebSocket.DiscordSocketClient _client;
-        private readonly CommandService _commands;
+        public readonly Discord.WebSocket.DiscordSocketClient _client;
+        public static CommandService _commands;
 
         // Retrieve client and CommandService instance via ctor
         public CommandHandler(Discord.WebSocket.DiscordSocketClient client, CommandService commands)
@@ -47,7 +47,7 @@ namespace echoBot
                 message.Author.IsBot)
                 return;
 
-            l.Verbose($"\"{messageParam.Content}\" sent by {messageParam.Author.Username + "#" + messageParam.Author.Discriminator} in {messageParam.Channel.Name}({messageParam.Channel.Id})", "CommandHandler");
+            l.Verbose($"\"{messageParam.Content}\" sent by {messageParam.Author.Username + "#" + messageParam.Author.Discriminator} in #{messageParam.Channel.Name}({messageParam.Channel.Id})", "CommandHandler");
             
             // Create a WebSocket-based command context based on the message
             var context = new SocketCommandContext(_client, message);
@@ -61,8 +61,16 @@ namespace echoBot
         }
         private Task HandleDeletedAsync(Cacheable<IMessage, UInt64> m, Cacheable<IMessageChannel, UInt64> ch)
         {
-            l.Verbose($"\"{m.Value}\" deleted by {0} in {ch.Value}({ch.Id})", "DeleteHandler");
+            l.Verbose($"\"{m.Value}\" deleted by {m.Value.Author.Username}#{m.Value.Author.Discriminator} in {ch.Value}({ch.Id})", "DeleteHandler");
             return Task.CompletedTask;
+        }
+        public static EmbedFooterBuilder GetFooter()
+        {
+            var fb = new EmbedFooterBuilder(){
+                Text = $"echoBot {Program.version}",
+                IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096"
+            };
+            return fb;
         }
     }
 }

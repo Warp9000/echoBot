@@ -14,7 +14,7 @@ public class JsonConfig
 public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
-
+    public static string version = "0.0.1 Dev";
     private Discord.WebSocket.DiscordSocketClient? _client;
     public static Discord.WebSocket.DiscordSocketConfig config = new Discord.WebSocket.DiscordSocketConfig();
     public static JsonConfig Config = new JsonConfig();
@@ -26,7 +26,7 @@ public class Program
         {
             AlwaysDownloadUsers = true,
             MessageCacheSize = 250,
-            LogLevel = LogSeverity.Info,
+            LogLevel = LogSeverity.Debug,
             GatewayIntents = GatewayIntents.All
         };
         _client = new Discord.WebSocket.DiscordSocketClient(config);

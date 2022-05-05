@@ -21,6 +21,7 @@ public class Program
     public static DateTime startTime = DateTime.Now;
     public static EmbedBuilder DefaultEmbed = new EmbedBuilder();
     public static int Commands = 0;
+    public static ulong Warp = 408615875252322305;
     public async Task MainAsync()
     {
         Config = JsonConvert.DeserializeObject<JsonConfig>(File.ReadAllText("config.json"));

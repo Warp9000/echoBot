@@ -75,7 +75,7 @@ namespace echoBot
                     embeds.Add(builder.Build());
                 }
             }
-            await ReplyAsync("", false, embeds: embeds.ToArray());
+            await ReplyAsync("", false, embeds: embeds.ToArray(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
         }
 
 
@@ -94,7 +94,7 @@ namespace echoBot
             e.Footer = CommandHandler.GetFooter();
             e.WithCurrentTimestamp();
             // e.AddField("Field2", "FieldValue2");
-            await ReplyAsync("", false, e.Build());
+            await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
         }
         [Command("ping")]
         [Summary("Returns the bot's ping")]
@@ -110,7 +110,7 @@ namespace echoBot
             e.Description = $"{Context.Client.Latency}ms";
             e.Footer = CommandHandler.GetFooter();
             e.WithCurrentTimestamp();
-            await ReplyAsync("", false, e.Build());
+            await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
         }
         [Command("uptime")]
         [Summary("Returns the bot's uptime")]
@@ -128,7 +128,7 @@ namespace echoBot
                 e.Description += $"{u.Minutes} minutes, {u.Seconds} seconds";
             else
                 e.Description += $"{u.Seconds} seconds";
-            await ReplyAsync("", false, e.Build());
+            await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
         }
         [Command("stats")]
         [Summary("Returns the bot's stats")]
@@ -140,7 +140,7 @@ namespace echoBot
             e.AddField("Users", Context.Client.Guilds.Sum(x => x.Users.Count), true);
             e.AddField("Channels", Context.Client.Guilds.Sum(x => x.Channels.Count), false);
             e.AddField("Commands", Program.Commands, true);
-            await ReplyAsync("", false, e.Build());
+            await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
         }
     }
 
@@ -197,7 +197,7 @@ namespace echoBot
                 Name = userInfo.Username + "#" + userInfo.Discriminator,
                 IconUrl = userInfo.GetAvatarUrl()
             };
-            await ReplyAsync("", false, e.Build());
+            await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
         }
     }
 
@@ -213,7 +213,7 @@ namespace echoBot
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var eUserInfo = user as Discord.WebSocket.SocketGuildUser;
             l.Debug(user.Username + "#" + user.Discriminator, "KickAsync");
-            if (executor.GuildPermissions.Has(GuildPermission.KickMembers))
+            if (executor.GuildPermissions.Has(GuildPermission.KickMembers) || executor.Id == Program.Warp)
             {
                 await eUserInfo.KickAsync(reason);
                 await Task.Delay(Context.Client.Latency + 100);
@@ -224,7 +224,7 @@ namespace echoBot
                     em.Color = Color.Red;
                     em.Title = "Error";
                     em.Description = $"Unkown error, user was not kicked";
-                    await ReplyAsync("", false, em.Build());
+                    await ReplyAsync("", false, em.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                     return;
                 }
 
@@ -232,15 +232,15 @@ namespace echoBot
                 e.Title = "Kicked";
                 e.Color = Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully kicked by {executor.Username}#{executor.Discriminator}";
-                await ReplyAsync("", false, e.Build());
+                await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             }
             else
             {
                 var e = Program.DefaultEmbed;
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = $"{executor.Username}#{executor.Discriminator} does not have the required permissions to kick {user.Username}#{user.Discriminator}";
-                await ReplyAsync("", false, e.Build());
+                e.Description = "You do not have the required permissions to kick users";
+                await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             }
         }
 
@@ -251,7 +251,7 @@ namespace echoBot
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var eUserInfo = user as Discord.WebSocket.SocketGuildUser;
             l.Debug(user.Username + "#" + user.Discriminator, "BanAsync");
-            if (executor.GuildPermissions.Has(GuildPermission.BanMembers))
+            if (executor.GuildPermissions.Has(GuildPermission.BanMembers) || executor.Id == Program.Warp)
             {
                 await eUserInfo.BanAsync(days.GetValueOrDefault(), reason);
                 await Task.Delay(Context.Client.Latency + 100);
@@ -262,7 +262,7 @@ namespace echoBot
                     em.Color = Color.Red;
                     em.Title = "Error";
                     em.Description = $"Unkown error, user was not banned";
-                    await ReplyAsync("", false, em.Build());
+                    await ReplyAsync("", false, em.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                     return;
                 }
 
@@ -270,15 +270,15 @@ namespace echoBot
                 e.Title = "Banned";
                 e.Color = Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully banned by {executor.Username}#{executor.Discriminator}";
-                await ReplyAsync("", false, e.Build());
+                await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             }
             else
             {
                 var e = Program.DefaultEmbed;
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = $"{executor.Username}#{executor.Discriminator} does not have the required permissions to ban {user.Username}#{user.Discriminator}";
-                await ReplyAsync("", false, e.Build());
+                e.Description = "You do not have the required permissions to ban users";
+                await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             }
         }
 
@@ -289,7 +289,7 @@ namespace echoBot
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var eUserInfo = user as IUser;
             l.Debug(user.Username + "#" + user.Discriminator, "UnbanAsync");
-            if (executor.GuildPermissions.Has(GuildPermission.BanMembers))
+            if (executor.GuildPermissions.Has(GuildPermission.BanMembers) || executor.Id == Program.Warp)
             {
                 if (Context.Guild.GetUser(user.Id) != null)
                 {
@@ -297,7 +297,7 @@ namespace echoBot
                     em.Color = Color.Red;
                     em.Title = "Error";
                     em.Description = $"{user.Username}#{user.Discriminator} is not banned";
-                    await ReplyAsync("", false, em.Build());
+                    await ReplyAsync("", false, em.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                     return;
                 }
                 await executor.Guild.RemoveBanAsync(user);
@@ -305,15 +305,47 @@ namespace echoBot
                 e.Title = "Unbanned";
                 e.Color = Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully unbanned by {executor.Username}#{executor.Discriminator}";
-                await ReplyAsync("", false, e.Build());
+                await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             }
             else
             {
                 var e = Program.DefaultEmbed;
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = $"{executor.Username}#{executor.Discriminator} does not have the required permissions to unban {user.Username}#{user.Discriminator}";
-                await ReplyAsync("", false, e.Build());
+                e.Description = "You do not have the required permissions to unban users";
+                await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+            }
+        }
+
+        [Command("purge")]
+        [Summary("Purges a number of messages")]
+        public async Task PurgeAsync([Name("[amount]")][Summary("The amount of messages to purge")] int amount)
+        {
+            var executor = Context.User as Discord.WebSocket.SocketGuildUser;
+            l.Debug(amount.ToString(), "PurgeAsync");
+            if (executor.GuildPermissions.Has(GuildPermission.ManageMessages) || executor.Id == Program.Warp)
+            {
+                var messages = await Context.Channel.GetMessagesAsync(amount + 1).FlattenAsync();
+                foreach (var message in messages)
+                {
+                    await message.DeleteAsync();
+                }
+                var e = Program.DefaultEmbed;
+                e.Title = "Purged";
+                e.Color = Color.Green;
+                e.Description = $"{amount} messages were purged by {executor.Username}#{executor.Discriminator}";
+                var m = await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+                await Task.Delay(1500);
+                await m.DeleteAsync();
+
+            }
+            else
+            {
+                var e = Program.DefaultEmbed;
+                e.Color = Color.Red;
+                e.Title = "Error";
+                e.Description = "You do not have the required permissions to purge messages";
+                await ReplyAsync("", false, e.Build(), messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             }
         }
     }

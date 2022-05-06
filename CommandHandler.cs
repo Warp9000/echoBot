@@ -63,7 +63,10 @@ namespace echoBot
         }
         private Task HandleDeletedAsync(Cacheable<IMessage, UInt64> m, Cacheable<IMessageChannel, UInt64> ch)
         {
-            l.Verbose($"\"{m.Value}\" deleted by {m.Value.Author.Username}#{m.Value.Author.Discriminator} in {ch.Value}({ch.Id})", "DeleteHandler");
+            if (m.HasValue)
+                l.Verbose($"\"{m.Value}\" deleted by {m.Value.Author.Username}#{m.Value.Author.Discriminator} in {ch.Value}({ch.Id})", "DeleteHandler");
+            else
+                l.Verbose($"Message deleted in {ch.Value}({ch.Id})", "DeleteHandler");
             return Task.CompletedTask;
         }
         public static EmbedFooterBuilder GetFooter()

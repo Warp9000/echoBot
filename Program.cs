@@ -105,12 +105,30 @@ public class Program
                     Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("config.json"));
                     break;
                 case "save":
+                    servers = new List<ulong>();
+                    foreach (var server in _client.Guilds)
+                    {
+                        servers.Clear();
+                        for (var i = 0; i < ServerConfigs.Count; i++)
+                        {
+                            servers.Add(ServerConfigs[i].id);
+                        }
+                        l.Info($"Adding server {server.Name} to config", "MainAsync");
+                        if (!servers.Contains(server.Id))
+                            ServerConfigs.Add(new ServerConfig
+                            {
+                                id = server.Id,
+                                prefix = Config.gPrefix,
+                                logChannel = 0
+                            });
+
+                    }
                     File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
                     break;
                 case "help":
                     Console.WriteLine("exit - exits the program");
                     Console.WriteLine("reload - reloads the config");
-                    Console.WriteLine("save - saves the config");
+                    Console.WriteLine("save - saves the server configs");
                     Console.WriteLine("help - shows this message");
                     break;
                 default:
@@ -148,7 +166,16 @@ public class Program
     {
         return _client.GetChannel(id) as ITextChannel;
     }
+    public static void Log(string title, string message, SocketCommandContext context)
+    {
+        var e = DefaultEmbed();
+        e.WithAuthor(context.User);
+        e.WithTitle(title);
+        e.WithDescription(message);
+        GetLogChannel(GetServerConfig(context.Guild.Id).logChannel).SendMessageAsync(null, false, e.Build());
+    }
 }
+
 public class l
 {
     public static void Log(LogMessage msg)

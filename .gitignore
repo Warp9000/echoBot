@@ -3,3 +3,4 @@ Publish.bat
 bin/
 obj/
 config.json
+servers.json

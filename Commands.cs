@@ -141,7 +141,17 @@ namespace echoBot
             e.AddField("Users", Context.Client.Guilds.Sum(x => x.Users.Count), true);
             e.AddField("Channels", Context.Client.Guilds.Sum(x => x.Channels.Count), true);
             e.AddField("Commands", Program.Commands, true);
-            e.AddField("Prefix", Program.Config.gPrefix, true);
+            var u = DateTime.Now - Program.startTime;
+            string uptime = "";
+            if (u.Days > 0)
+                uptime += $"{u.Days}d, ";
+            if (u.Hours > 0)
+                uptime += $"{u.Hours}h, ";
+            if (u.Minutes > 0) 
+                uptime += $"{u.Minutes}m, ";
+            if (u.Seconds > 0)
+                uptime += $"{u.Seconds}s";
+            e.AddField("Uptime", uptime, true);
             e.AddField("Version", Program.version, true);
             await ReplyAsync("", false, e.Build());
         }
@@ -167,6 +177,7 @@ namespace echoBot
         [Summary("Gets or sets the bot's prefix")]
         public async Task PrefixAsync([Name("<prefix>")][Summary("The prefix to set")] string? prefix = null)
         {
+            var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var e = Program.DefaultEmbed();
             e.Title = "Prefix";
             if (prefix == null)
@@ -175,10 +186,18 @@ namespace echoBot
             }
             else
             {
+                if (!executor.GuildPermissions.ManageGuild)
+                {
+                    e.Description = "You don't have the permissions to do that!";
+                    e.Color = Color.Red;
+                    await ReplyAsync("", false, e.Build());
+                    return;
+                }
                 foreach (var c in Program.ServerConfigs)
                 {
                     if (c.id == Context.Guild.Id)
                     {
+                        e.Title = "Prefix";
                         c.prefix = prefix;
                         e.Color = Color.Green;
                         e.Description = $"The prefix has been set to `{prefix}`";
@@ -262,7 +281,6 @@ namespace echoBot
             e.ThumbnailUrl = userInfo.GetAvatarUrl();
             await ReplyAsync("", false, e.Build());
         }
-
     }
 
 
@@ -297,13 +315,14 @@ namespace echoBot
                 e.Color = Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully kicked by {executor.Username}#{executor.Discriminator}";
                 await ReplyAsync("", false, e.Build());
+                Program.Log("Kick", $"{user.Username}#{user.Discriminator} was kicked", Context);
             }
             else
             {
                 var e = Program.DefaultEmbed();
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = "You do not have the required permissions to kick users";
+                e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
             }
         }
@@ -335,13 +354,14 @@ namespace echoBot
                 e.Color = Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully banned by {executor.Username}#{executor.Discriminator}";
                 await ReplyAsync("", false, e.Build());
+                Program.Log("Ban", $"{user.Username}#{user.Discriminator} was banned", Context);
             }
             else
             {
                 var e = Program.DefaultEmbed();
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = "You do not have the required permissions to ban users";
+                e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
             }
         }
@@ -370,13 +390,14 @@ namespace echoBot
                 e.Color = Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully unbanned by {executor.Username}#{executor.Discriminator}";
                 await ReplyAsync("", false, e.Build());
+                Program.Log("Unban", $"{user.Username}#{user.Discriminator} was unbanned", Context);
             }
             else
             {
                 var e = Program.DefaultEmbed();
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = "You do not have the required permissions to unban users";
+                e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
             }
         }
@@ -390,16 +411,24 @@ namespace echoBot
             if (executor.GuildPermissions.Has(GuildPermission.ManageMessages) || executor.Id == Program.Warp)
             {
                 var messages = await Context.Channel.GetMessagesAsync(amount + 1).FlattenAsync();
-                foreach (var message in messages)
+                var ch = Context.Channel as ITextChannel;
+                if (ch == null || messages.Count() <= 0)
                 {
-                    await message.DeleteAsync();
+                    var em = Program.DefaultEmbed();
+                    em.Color = Color.Red;
+                    em.Title = "Error";
+                    em.Description = "No messages to purge";
+                    await ReplyAsync("", false, em.Build());
+                    return;
                 }
+                await ch.DeleteMessagesAsync(messages);
                 var e = Program.DefaultEmbed();
                 e.Title = "Purged";
                 e.Color = Color.Green;
-                e.Description = $"{amount} messages were purged by {executor.Username}#{executor.Discriminator}";
+                var purged = messages.Count() - 1;
+                e.Description = $"{purged} messages were purged by {executor.Username}#{executor.Discriminator}";
                 var m = await ReplyAsync("", false, e.Build());
-                await Program.GetLogChannel(Context.Guild.Id).SendMessageAsync("", false, e.WithDescription($"{amount} messages were purged by {executor.Username}#{executor.Discriminator} in {Context.Channel}").Build());
+                Program.Log("Purge", $"{amount} messages Purged in <#{Context.Channel.Id}>", Context);
                 await Task.Delay(1500);
                 await m.DeleteAsync();
 
@@ -409,7 +438,7 @@ namespace echoBot
                 var e = Program.DefaultEmbed();
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = "You do not have the required permissions to purge messages";
+                e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
             }
         }
@@ -424,8 +453,22 @@ namespace echoBot
             {
                 var e = Program.DefaultEmbed();
                 e.Title = "Log Channel";
-                e.Color = Color.Green;
-                e.Description = $"The log channel was set to {channel.Name} by {executor.Username}#{executor.Discriminator}";
+                foreach (var c in Program.ServerConfigs)
+                {
+                    if (c.id == Context.Guild.Id)
+                    {
+                        c.logChannel = channel.Id;
+                        e.Color = Color.Green;
+                        e.Description = $"The prefix has been set to <#{channel.Id}>";
+                        break;
+                    }
+                    else
+                    {
+                        e.Title = "Error";
+                        e.Color = Color.Red;
+                        e.Description = $"The prefix has not been set";
+                    }
+                }
                 await ReplyAsync("", false, e.Build());
             }
             else
@@ -433,9 +476,10 @@ namespace echoBot
                 var e = Program.DefaultEmbed();
                 e.Color = Color.Red;
                 e.Title = "Error";
-                e.Description = "You do not have the required permissions to set the log channel";
+                e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
             }
         }
     }
+
 }

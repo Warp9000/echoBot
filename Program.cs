@@ -142,7 +142,27 @@ public class Program
     }
     public Task Log(LogMessage msg)
     {
-        l.Log(msg);
+        switch (msg.Severity)
+        {
+            case LogSeverity.Critical:
+                l.Critical(msg.Message, msg.Source);
+                break;
+            case LogSeverity.Error:
+                l.Error(msg.Message, msg.Source);
+                break;
+            case LogSeverity.Warning:
+                l.Warning(msg.Message, msg.Source);
+                break;
+            case LogSeverity.Info:
+                l.Info(msg.Message, msg.Source);
+                break;
+            case LogSeverity.Verbose:
+                l.Verbose(msg.Message, msg.Source);
+                break;
+            case LogSeverity.Debug:
+                l.Debug(msg.Message, msg.Source);
+                break;
+        }
         return Task.CompletedTask;
     }
     public static EmbedBuilder DefaultEmbed()

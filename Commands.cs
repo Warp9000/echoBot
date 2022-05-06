@@ -459,14 +459,14 @@ namespace echoBot
                     {
                         c.logChannel = channel.Id;
                         e.Color = Color.Green;
-                        e.Description = $"The prefix has been set to <#{channel.Id}>";
+                        e.Description = $"The log channel has been set to <#{channel.Id}>";
                         break;
                     }
                     else
                     {
                         e.Title = "Error";
                         e.Color = Color.Red;
-                        e.Description = $"The prefix has not been set";
+                        e.Description = $"The log channel has not been set";
                     }
                 }
                 await ReplyAsync("", false, e.Build());

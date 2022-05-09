@@ -21,6 +21,7 @@ namespace echoBot
             // Hook the MessageReceived event into our command handler
             _client.MessageReceived += HandleCommandAsync;
             _client.MessageDeleted += HandleDeletedAsync;
+            _client.ButtonExecuted += HandleButtonAsync;
             // Here we discover all of the command modules in the entry 
             // assembly and load them. Starting from Discord.NET 2.0, a
             // service provider is required to be passed into the
@@ -68,6 +69,117 @@ namespace echoBot
             else
                 l.Verbose($"Message deleted in {ch.Value}({ch.Id})", "DeleteHandler");
             return Task.CompletedTask;
+        }
+        private async Task HandleButtonAsync(Discord.WebSocket.SocketMessageComponent component)
+        {
+            switch (component.Data.CustomId)
+            {
+                case "help-button-next":
+                    var e = Program.DefaultEmbed();
+                    var mp = new MessageProperties();
+                    var page = int.Parse(component.Message.Embeds.ToList()[0].Title.Substring(6, 1));
+                    ModuleInfo[] ml = _commands.Modules.ToArray();
+                    ModuleInfo m = ml[page];
+                    if (page + 1 <= ml.Length)
+                    {
+                        page++;
+                        m = _commands.Modules.ToArray()[page-1];
+                    }
+
+                    var v = "";
+                    var p = "";
+                    foreach (var cmd in m.Commands)
+                    {
+                        if (cmd.Parameters.Count > 0)
+                        {
+                            foreach (var par in cmd.Parameters)
+                            {
+                                p += $"{par.Name} ";
+                            }
+                            p.TrimEnd(' ');
+                        }
+                        v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                        p = " ";
+                    }
+                    e.AddField(m.Name, v);
+                    e.Title = $"Help ({page}/{ml.Length})";
+                    e.Description = "[required] <optional>";
+                    var c = new ComponentBuilder();
+                    if (page > 1)
+                        c.WithButton("Prev", "help-button-prev");
+                    else
+                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary);
+                    if (page < ml.Length)
+                        c.WithButton("Next", "help-button-next");
+                    else
+                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary);
+                    await component.UpdateAsync(x =>
+                    {
+                        x.Embed = e.Build();
+                        x.Components = c.Build();
+                    });
+                    break;
+
+
+
+                case "help-button-prev":
+                    e = Program.DefaultEmbed();
+                    mp = new MessageProperties();
+                    page = int.Parse(component.Message.Embeds.ToList()[0].Title.Substring(6, 1));
+                    ml = _commands.Modules.ToArray();
+                    m = ml[page-1];
+                    if (page - 1 >= 0)
+                    {
+                        page--;
+                        m = _commands.Modules.ToArray()[page-1];
+                    }
+
+                    v = "";
+                    p = "";
+                    foreach (var cmd in m.Commands)
+                    {
+                        if (cmd.Parameters.Count > 0)
+                        {
+                            foreach (var par in cmd.Parameters)
+                            {
+                                p += $"{par.Name} ";
+                            }
+                            p.TrimEnd(' ');
+                        }
+                        v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                        p = " ";
+                    }
+                    e.AddField(m.Name, v);
+                    e.Title = $"Help ({page}/{ml.Length})";
+                    e.Description = "[required] <optional>";
+                    c = new ComponentBuilder();
+                    if (page > 1)
+                        c.WithButton("Prev", "help-button-prev");
+                    else
+                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary);
+                    if (page < ml.Length)
+                        c.WithButton("Next", "help-button-next");
+                    else
+                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary);
+                    await component.UpdateAsync(x =>
+                    {
+                        x.Embed = e.Build();
+                        x.Components = c.Build();
+                    });
+                    break;
+                case "help-button-prev-f":
+                    await component.UpdateAsync(x =>
+                    {
+                        x.Content = null;
+                    });
+                    break;
+                case "help-button-next-f":
+                    await component.UpdateAsync(x =>
+                    {
+                        x.Content = null;
+                    });
+                    break;
+            }
         }
         public static EmbedFooterBuilder GetFooter()
         {

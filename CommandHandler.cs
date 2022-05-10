@@ -94,9 +94,9 @@ namespace echoBot
                         {
                             foreach (var par in cmd.Parameters)
                             {
-                                p += $"{par.Name} ";
+                                p += $" {par.Name}";
                             }
-                            p.TrimEnd(' ');
+                            // p.TrimEnd(' ');
                         }
                         v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
                         p = " ";
@@ -142,9 +142,9 @@ namespace echoBot
                         {
                             foreach (var par in cmd.Parameters)
                             {
-                                p += $"{par.Name} ";
+                                p += $" {par.Name}";
                             }
-                            p.TrimEnd(' ');
+                            // p.TrimEnd(' ');
                         }
                         v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
                         p = " ";

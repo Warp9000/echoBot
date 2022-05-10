@@ -1,9 +1,5 @@
-using System.Security.AccessControl;
-using System.Security.Cryptography;
-using System.Globalization;
 using Discord;
 using Discord.Commands;
-using System.IO;
 using Newtonsoft.Json;
 using System.Net;
 
@@ -20,67 +16,56 @@ namespace echoBot
     [Summary("Info Commands")]
     public class InfoModule : ModuleBase<SocketCommandContext>
     {
-        [Command("help")]
-        [Summary("Shows a list of commands")]
-        public async Task HelpAsync([Name("<command>")][Summary("The command to get help for")] string? command = null)
+        [Command("feedback")]
+        [Summary("Send feedback to Warp")]
+        public async Task Feedback([Remainder][Name("[feedback]")][Summary("String of the feedback you want to give")] string feedback)
         {
-            var builder = new EmbedBuilder();
-            builder.WithFooter(CommandHandler.GetFooter());
-            builder.WithColor(Color.DarkPurple);
-            builder.WithCurrentTimestamp();
-            List<Embed> embeds = new List<Embed>();
-            if (command == null)
+            var warp = Context.Client.GetUser(Program.Warp);
+            var dm = await warp.CreateDMChannelAsync();
+            var e = Program.DefaultEmbed();
+            e.Title = "Feedback";
+            e.Description = feedback;
+            e.Author = new EmbedAuthorBuilder()
             {
-                builder.WithTitle("Help");
-                builder.WithDescription("[required] <optional>");
-                foreach (var item in CommandHandler._commands.Modules)
-                {
-                    var v = "";
-                    var p = " ";
-                    foreach (var cmd in item.Commands)
-                    {
-                        if (cmd.Parameters.Count > 0)
-                        {
-                            foreach (var par in cmd.Parameters)
-                            {
-                                p += $"{par.Name} ";
-                            }
-                            p.TrimEnd(' ');
-                        }
-                        v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
-                        p = " ";
-                    }
-                    builder.AddField(item.Name, v);
-                }
-                embeds.Add(builder.Build());
-            }
-            else
-            {
-                var cmd = CommandHandler._commands.Search(command);
-                if (cmd.IsSuccess)
-                {
-                    for (var i = 0; i < cmd.Commands.Count; i++)
-                    {
-                        builder.WithTitle($"{string.Join(", ", cmd.Commands[i].Command.Aliases)}".TrimEnd(' ', ','));
-                        builder.WithDescription(cmd.Commands[i].Command.Summary);
-                        foreach (var par in cmd.Commands[i].Command.Parameters)
-                        {
-                            builder.AddField(par.Name, par.Summary);
-                        }
-                        if (!embeds.Contains(builder.Build()))
-                            embeds.Add(builder.Build());
-                    }
-                }
-                else
-                {
-                    builder.WithTitle("Command not found");
-                    builder.WithColor(Color.Red);
-                    builder.WithDescription($"Try `{Program.Config.gPrefix}help` to see a list of commands");
-                    embeds.Add(builder.Build());
-                }
-            }
-            await ReplyAsync("", false, embeds: embeds.ToArray());
+                Name = Context.User.Username + "#" + Context.User.Discriminator,
+                IconUrl = Context.User.GetAvatarUrl()
+            };
+            await dm.SendMessageAsync("", false, e.Build());
+            await Context.Message.AddReactionAsync(new Emoji("✅"));
         }
+
+
+
+        [Command("help")]
+        [Summary("Shows the new help menu using reactions")]
+        public async Task HelpAsync()
+        {
+            var e = Program.DefaultEmbed();
+            var m = CommandHandler._commands.Modules.ToArray()[0];
+            List<ModuleInfo> ml = CommandHandler._commands.Modules.ToList();
+            e.Title = $"Help (1/{ml.Count})";
+            e.Description = "[required] <optional>";
+            var v = "";
+            var p = "";
+            foreach (var cmd in m.Commands)
+            {
+                if (cmd.Parameters.Count > 0)
+                {
+                    foreach (var par in cmd.Parameters)
+                    {
+                        p += $" {par.Name}";
+                    }
+                    // p.TrimEnd(' ');
+                }
+                v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                p = " ";
+            }
+            e.AddField(m.Name, v);
+            var c = new ComponentBuilder().WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary).WithButton("Next", "help-button-next").Build();
+            var msg = await ReplyAsync("", false, e.Build(), components: c);
+            var pages = (int)Math.Ceiling((double)ml.Count);
+        }
+
 
 
         [Command("botinfo")]
@@ -277,12 +262,13 @@ namespace echoBot
 
         [Command("avatar")]
         [Summary("Returns the user's avatar")]
+        [Alias("pfp")]
         public async Task AvatarAsync([Name("<user>")][Summary("The user to show avatar of")] Discord.WebSocket.SocketUser? user = null)
         {
             var userInfo = user ?? Context.User;
             var e = Program.DefaultEmbed();
             e.Title = userInfo.Username + "#" + userInfo.Discriminator;
-            e.ThumbnailUrl = userInfo.GetAvatarUrl();
+            e.ImageUrl = userInfo.GetAvatarUrl();
             await ReplyAsync("", false, e.Build());
         }
     }
@@ -564,9 +550,9 @@ namespace echoBot
                 e.Title = "Purged";
                 e.Color = Color.Green;
                 var purged = messages.Count() - 1;
-                e.Description = $"{purged} messages were purged by {executor.Username}#{executor.Discriminator}";
+                e.Description = $"{purged}/{amount} messages were purged by {executor.Username}#{executor.Discriminator}";
                 var m = await ReplyAsync("", false, e.Build());
-                Program.Log("Purge", $"{amount} messages Purged in <#{Context.Channel.Id}>", Context);
+                Program.Log("Purge", $"{purged}/{amount} messages Purged in <#{Context.Channel.Id}>", Context);
                 await Task.Delay(1500);
                 await m.DeleteAsync();
 
@@ -625,35 +611,79 @@ namespace echoBot
     [Summary("Test commands")]
     public class TestCommands : ModuleBase<SocketCommandContext>
     {
-        [Command("help")]
-        [Summary("Shows the new help menu using reactions")]
-        public async Task HelpAsync()
+        [Command("ping")]
+        [Summary("Pings the bot")]
+        public async Task PingAsync()
         {
-            var e = Program.DefaultEmbed();
-            var m = CommandHandler._commands.Modules.ToArray()[0];
-            List<ModuleInfo> ml = CommandHandler._commands.Modules.ToList();
-            e.Title = $"Help (1/{ml.Count})";
-            e.Description = "[required] <optional>";
-            var v = "";
-            var p = "";
-            foreach (var cmd in m.Commands)
+            await ReplyAsync("Pong!" + Environment.NewLine + "Ping: " + Context.Client.Latency);
+        }
+    }
+
+    [Group("old")]
+    [Name("Old")]
+    [Summary("Old commands")]
+    public class OldCommands : ModuleBase<SocketCommandContext>
+    {
+        [Command("help")]
+        [Summary("Shows a list of commands")]
+        public async Task HelpAsync([Name("<command>")][Summary("The command to get help for")] string? command = null)
+        {
+            var builder = new EmbedBuilder();
+            builder.WithFooter(CommandHandler.GetFooter());
+            builder.WithColor(Color.DarkPurple);
+            builder.WithCurrentTimestamp();
+            List<Embed> embeds = new List<Embed>();
+            if (command == null)
             {
-                if (cmd.Parameters.Count > 0)
+                builder.WithTitle("Help");
+                builder.WithDescription("[required] <optional>");
+                foreach (var item in CommandHandler._commands.Modules)
                 {
-                    foreach (var par in cmd.Parameters)
+                    var v = "";
+                    var p = " ";
+                    foreach (var cmd in item.Commands)
                     {
-                        p += $"{par.Name} ";
+                        if (cmd.Parameters.Count > 0)
+                        {
+                            foreach (var par in cmd.Parameters)
+                            {
+                                p += $"{par.Name} ";
+                            }
+                            p.TrimEnd(' ');
+                        }
+                        v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                        p = " ";
                     }
-                    p.TrimEnd(' ');
+                    builder.AddField(item.Name, v);
                 }
-                v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
-                p = " ";
+                embeds.Add(builder.Build());
             }
-            e.AddField(m.Name, v);
-            var c = new ComponentBuilder().WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary).WithButton("Next", "help-button-next").Build();
-            var msg = await ReplyAsync("", false, e.Build(), components: c);
-            var page = 0;
-            var pages = (int)Math.Ceiling((double)ml.Count);
+            else
+            {
+                var cmd = CommandHandler._commands.Search(command);
+                if (cmd.IsSuccess)
+                {
+                    for (var i = 0; i < cmd.Commands.Count; i++)
+                    {
+                        builder.WithTitle($"{string.Join(", ", cmd.Commands[i].Command.Aliases)}".TrimEnd(' ', ','));
+                        builder.WithDescription(cmd.Commands[i].Command.Summary);
+                        foreach (var par in cmd.Commands[i].Command.Parameters)
+                        {
+                            builder.AddField(par.Name, par.Summary);
+                        }
+                        if (!embeds.Contains(builder.Build()))
+                            embeds.Add(builder.Build());
+                    }
+                }
+                else
+                {
+                    builder.WithTitle("Command not found");
+                    builder.WithColor(Color.Red);
+                    builder.WithDescription($"Try `{Program.Config.gPrefix}help` to see a list of commands");
+                    embeds.Add(builder.Build());
+                }
+            }
+            await ReplyAsync("", false, embeds: embeds.ToArray());
         }
     }
 }

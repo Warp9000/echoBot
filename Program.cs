@@ -1,15 +1,15 @@
-﻿
-using System.Runtime.CompilerServices;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
+using System.Timers;
 
 public class GlobalConfig
 {
     public string token { get; set; } = "";
     public string gPrefix { get; set; } = ";;";
     public string status { get; set; } = "";
-    public string game { get; set; } = "";
+    public string[] game { get; set; } = new string[0];
+    public string[] gameType { get; set; } = new string[0];
 }
 public class ServerConfig
 {
@@ -28,6 +28,7 @@ public class Program
     public static int Commands = 0;
     public static ulong Warp = 408615875252322305;
     public static List<ServerConfig>? ServerConfigs = new List<ServerConfig>();
+    int CurrentActivity = 0;
     public async Task MainAsync()
     {
         Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("config.json"));
@@ -55,7 +56,7 @@ public class Program
 
         await _client.LoginAsync(TokenType.Bot, Config.token);
         await _client.StartAsync();
-        await _client.SetActivityAsync(new Game(Config.game, ActivityType.Watching, details: "https://warp.tf/"));
+        await _client.SetActivityAsync(new Game(Config.game[0], (ActivityType)Enum.Parse(typeof(ActivityType), Config.gameType[0]), details: "https://warp.tf/"));
         // await _client.SetGameAsync(Config.game);
         await _client.SetStatusAsync((UserStatus)Enum.Parse(typeof(UserStatus), Config.status));
 
@@ -89,6 +90,18 @@ public class Program
 
         }
         File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+
+        var timer = new System.Timers.Timer(15000);
+        timer.Elapsed += async (sender, e) =>
+        {
+            l.Debug("Timer ticked", "MainAsync");
+            if (CurrentActivity >= Config.game.Length)
+                CurrentActivity = 0;
+            await _client.SetActivityAsync(new Game(Config.game[CurrentActivity], (ActivityType)Enum.Parse(typeof(ActivityType), Config.gameType[CurrentActivity]), details: "https://warp.tf/"));
+            CurrentActivity++;
+        };
+        timer.Start();
+
 
         // console commands
         while (true)

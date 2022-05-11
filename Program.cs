@@ -41,6 +41,10 @@ public class Program
         };
         _client = new Discord.WebSocket.DiscordSocketClient(config);
 
+        Directory.CreateDirectory("logs");
+        if (File.Exists("logs/latest.log"))
+            File.Move("logs/latest.log", "logs/log-" + File.GetCreationTime("logs/latest.log").ToString("yyyy-MM-dd-HH-mm-ss") + ".log");
+
         _client.Log += Log;
 
         if (string.IsNullOrEmpty(Config.token))
@@ -215,6 +219,7 @@ public class l
     {
         if (msg.Severity <= Program.config.LogLevel)
             Console.WriteLine($"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message} {msg.Exception}");
+        File.AppendAllText("logs/latest.log", $"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message} {msg.Exception}\n");
     }
     public static void Debug(string msg, string source = "?")
     {

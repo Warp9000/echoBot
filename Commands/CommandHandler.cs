@@ -108,11 +108,11 @@ namespace echoBot
                     if (page > 1)
                         c.WithButton("Prev", "help-button-prev");
                     else
-                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary);
+                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true);
                     if (page < ml.Length)
                         c.WithButton("Next", "help-button-next");
                     else
-                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary);
+                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary, disabled: true);
                     await component.UpdateAsync(x =>
                     {
                         x.Embed = e.Build();
@@ -156,27 +156,15 @@ namespace echoBot
                     if (page > 1)
                         c.WithButton("Prev", "help-button-prev");
                     else
-                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary);
+                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true);
                     if (page < ml.Length)
                         c.WithButton("Next", "help-button-next");
                     else
-                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary);
+                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary, disabled: true);
                     await component.UpdateAsync(x =>
                     {
                         x.Embed = e.Build();
                         x.Components = c.Build();
-                    });
-                    break;
-                case "help-button-prev-f":
-                    await component.UpdateAsync(x =>
-                    {
-                        x.Content = null;
-                    });
-                    break;
-                case "help-button-next-f":
-                    await component.UpdateAsync(x =>
-                    {
-                        x.Content = null;
                     });
                     break;
             }

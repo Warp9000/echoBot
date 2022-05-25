@@ -13,7 +13,7 @@ namespace echoBot
     {
         [Command("help")]
         [Summary("Shows a list of commands")]
-        public async Task HelpAsync([Name("<command>")][Summary("The command to get help for")] string? command = null)
+        public async Task HelpAsync([Remainder][Name("<command>")][Summary("The command to get help for")] string? command = null)
         {
             var builder = new EmbedBuilder();
             builder.WithFooter(CommandHandler.GetFooter());
@@ -38,7 +38,7 @@ namespace echoBot
                             }
                             p.TrimEnd(' ');
                         }
-                        v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                        v += $"{Program.Config.prefix}{cmd.Name}{p} - {cmd.Summary}\n";
                         p = " ";
                     }
                     builder.AddField(item.Name, v);
@@ -66,7 +66,7 @@ namespace echoBot
                 {
                     builder.WithTitle("Command not found");
                     builder.WithColor(Color.Red);
-                    builder.WithDescription($"Try `{Program.Config.gPrefix}help` to see a list of commands");
+                    builder.WithDescription($"Try `{Program.Config.prefix}help` to see a list of commands");
                     embeds.Add(builder.Build());
                 }
             }

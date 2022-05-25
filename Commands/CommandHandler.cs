@@ -47,7 +47,9 @@ namespace echoBot
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
             if (message.Author.IsBot)
                 return;
-            if (!message.HasStringPrefix(Program.Config.gPrefix, ref argPos) && !message.HasStringPrefix(Program.GetServerConfig(new SocketCommandContext(_client, message).Guild.Id).prefix, ref argPos))
+            if (!message.HasStringPrefix(Program.Config.prefix, ref argPos) &&
+                !message.HasStringPrefix(Program.GetServerConfig(new SocketCommandContext(_client, message).Guild.Id).prefix, ref argPos) &&
+                !message.HasMentionPrefix(_client.CurrentUser, ref argPos))
                 return;
 
             l.Verbose($"\"{messageParam.Content}\" sent by {messageParam.Author.Username + "#" + messageParam.Author.Discriminator} in #{messageParam.Channel.Name}({messageParam.Channel.Id})", "CommandHandler");
@@ -72,103 +74,124 @@ namespace echoBot
         }
         private async Task HandleButtonAsync(Discord.WebSocket.SocketMessageComponent component)
         {
-            switch (component.Data.CustomId)
+            HelpLink? link = null;
+            try
             {
-                case "help-button-next":
-                    var e = Program.DefaultEmbed();
-                    var mp = new MessageProperties();
-                    var page = int.Parse(component.Message.Embeds.ToList()[0].Title.Substring(6, 1));
-                    ModuleInfo[] ml = _commands.Modules.ToArray();
-                    ModuleInfo m = ml[page];
-                    if (page + 1 <= ml.Length)
-                    {
-                        page++;
-                        m = _commands.Modules.ToArray()[page-1];
-                    }
+                switch (component.Data.CustomId)
+                {
+                    case "help-button-next":
+                        link = HelpLinks.Find(x => x.Message.Id == component.Message.Id);
+                        if (link == null)
+                            return;
+                        if (link.UserId != component.User.Id)
+                            await component.RespondAsync("You are not the author of this message.", ephemeral: true);
 
-                    var v = "";
-                    var p = "";
-                    foreach (var cmd in m.Commands)
-                    {
-                        if (cmd.Parameters.Count > 0)
+                        var e = Program.DefaultEmbed();
+                        var mp = new MessageProperties();
+                        var page = int.Parse(component.Message.Embeds.ToList()[0].Title.Substring(6, 1));
+                        ModuleInfo[] ml = _commands.Modules.ToArray();
+                        ModuleInfo m = ml[page];
+                        if (page + 1 <= ml.Length)
                         {
-                            foreach (var par in cmd.Parameters)
-                            {
-                                p += $" {par.Name}";
-                            }
-                            // p.TrimEnd(' ');
+                            page++;
+                            m = _commands.Modules.ToArray()[page - 1];
                         }
-                        v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
-                        p = " ";
-                    }
-                    e.AddField(m.Name, v);
-                    e.Title = $"Help ({page}/{ml.Length})";
-                    e.Description = "[required] <optional>";
-                    var c = new ComponentBuilder();
-                    if (page > 1)
-                        c.WithButton("Prev", "help-button-prev");
-                    else
-                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true);
-                    if (page < ml.Length)
-                        c.WithButton("Next", "help-button-next");
-                    else
-                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary, disabled: true);
-                    await component.UpdateAsync(x =>
-                    {
-                        x.Embed = e.Build();
-                        x.Components = c.Build();
-                    });
-                    break;
 
-
-
-                case "help-button-prev":
-                    e = Program.DefaultEmbed();
-                    mp = new MessageProperties();
-                    page = int.Parse(component.Message.Embeds.ToList()[0].Title.Substring(6, 1));
-                    ml = _commands.Modules.ToArray();
-                    m = ml[page-1];
-                    if (page - 1 >= 0)
-                    {
-                        page--;
-                        m = _commands.Modules.ToArray()[page-1];
-                    }
-
-                    v = "";
-                    p = "";
-                    foreach (var cmd in m.Commands)
-                    {
-                        if (cmd.Parameters.Count > 0)
+                        var v = "";
+                        var p = "";
+                        foreach (var cmd in m.Commands)
                         {
-                            foreach (var par in cmd.Parameters)
+                            if (cmd.Parameters.Count > 0)
                             {
-                                p += $" {par.Name}";
+                                foreach (var par in cmd.Parameters)
+                                {
+                                    p += $" {par.Name}";
+                                }
+                                // p.TrimEnd(' ');
                             }
-                            // p.TrimEnd(' ');
+                            v += $"{Program.Config.prefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                            p = " ";
                         }
-                        v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
-                        p = " ";
-                    }
-                    e.AddField(m.Name, v);
-                    e.Title = $"Help ({page}/{ml.Length})";
-                    e.Description = "[required] <optional>";
-                    c = new ComponentBuilder();
-                    if (page > 1)
-                        c.WithButton("Prev", "help-button-prev");
-                    else
-                        c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true);
-                    if (page < ml.Length)
-                        c.WithButton("Next", "help-button-next");
-                    else
-                        c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary, disabled: true);
-                    await component.UpdateAsync(x =>
-                    {
-                        x.Embed = e.Build();
-                        x.Components = c.Build();
-                    });
-                    break;
+                        e.AddField(m.Name, v);
+                        e.Title = $"Help ({page}/{ml.Length})";
+                        e.Description = "[required] <optional>";
+                        var c = new ComponentBuilder();
+                        if (page > 1)
+                            c.WithButton("Prev", "help-button-prev");
+                        else
+                            c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true);
+                        if (page < ml.Length)
+                            c.WithButton("Next", "help-button-next");
+                        else
+                            c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary, disabled: true);
+                        await component.UpdateAsync(x =>
+                        {
+                            x.Embed = e.Build();
+                            x.Components = c.Build();
+                        });
+                        break;
+
+
+
+                    case "help-button-prev":
+                        link = HelpLinks.Find(x => x.Message.Id == component.Message.Id);
+                        if (link == null)
+                            return;
+                        if (link.UserId != component.User.Id)
+                            await component.RespondAsync("You are not the author of this message.", ephemeral: true);
+
+                        e = Program.DefaultEmbed();
+                        mp = new MessageProperties();
+                        page = int.Parse(component.Message.Embeds.ToList()[0].Title.Substring(6, 1));
+                        ml = _commands.Modules.ToArray();
+                        m = ml[page - 1];
+                        if (page - 1 >= 0)
+                        {
+                            page--;
+                            m = _commands.Modules.ToArray()[page - 1];
+                        }
+
+                        v = "";
+                        p = "";
+                        foreach (var cmd in m.Commands)
+                        {
+                            if (cmd.Parameters.Count > 0)
+                            {
+                                foreach (var par in cmd.Parameters)
+                                {
+                                    p += $" {par.Name}";
+                                }
+                                // p.TrimEnd(' ');
+                            }
+                            v += $"{Program.Config.prefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                            p = " ";
+                        }
+                        e.AddField(m.Name, v);
+                        e.Title = $"Help ({page}/{ml.Length})";
+                        e.Description = "[required] <optional>";
+                        c = new ComponentBuilder();
+                        if (page > 1)
+                            c.WithButton("Prev", "help-button-prev");
+                        else
+                            c.WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true);
+                        if (page < ml.Length)
+                            c.WithButton("Next", "help-button-next");
+                        else
+                            c.WithButton("Next", "help-button-next-f", ButtonStyle.Secondary, disabled: true);
+                        await component.UpdateAsync(x =>
+                        {
+                            x.Embed = e.Build();
+                            x.Components = c.Build();
+                        });
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                l.Error(ex.StackTrace!, "HelpButtonHandler");
             }
         }
+        public static List<HelpLink> HelpLinks = new List<HelpLink>();
         public static EmbedFooterBuilder GetFooter()
         {
             var fb = new EmbedFooterBuilder()
@@ -177,6 +200,16 @@ namespace echoBot
                 IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096"
             };
             return fb;
+        }
+    }
+    public class HelpLink
+    {
+        public IUserMessage Message { get; set; }
+        public ulong UserId { get; set; }
+        public HelpLink(IUserMessage m, ulong u)
+        {
+            Message = m;
+            UserId = u;
         }
     }
 }

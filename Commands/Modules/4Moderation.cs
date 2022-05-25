@@ -51,14 +51,14 @@ namespace echoBot
 
         [Command("ban")]
         [Summary("Bans a user")]
-        public async Task BanAsync([Name("[user]")][Summary("The user to ban")] Discord.WebSocket.SocketUser user, [Name("<reason>")][Summary("The reason for the ban")] string? reason = null, [Name("<days>")][Summary("The amount of days to delete messages for")] int? days = null)
+        public async Task BanAsync([Name("[user]")][Summary("The user to ban")] Discord.WebSocket.SocketUser user, [Remainder][Name("<reason>")][Summary("The reason for the ban")] string? reason = null)
         {
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var eUserInfo = user as Discord.WebSocket.SocketGuildUser;
             l.Debug(user.Username + "#" + user.Discriminator, "BanAsync");
             if ((executor.GuildPermissions.Has(GuildPermission.BanMembers) && executor.Roles.Last().Position > eUserInfo.Roles.Last().Position) || executor.Id == Program.Warp)
             {
-                await eUserInfo.BanAsync(days.GetValueOrDefault(), reason);
+                await eUserInfo.BanAsync(0, reason);
                 await Task.Delay(Context.Client.Latency + 100);
                 await Context.Guild.DownloadUsersAsync();
                 if (Context.Guild.GetUser(user.Id) == null)
@@ -90,7 +90,7 @@ namespace echoBot
 
         [Command("unban")]
         [Summary("Unbans a user")]
-        public async Task UnbanAsync([Name("[user]")][Summary("The user to unban")] Discord.WebSocket.SocketUser user, [Name("<reason>")][Summary("The reason for the unban")] string? reason = null)
+        public async Task UnbanAsync([Name("[user]")][Summary("The user to unban")] Discord.WebSocket.SocketUser user, [Remainder] string? _ = null)
         {
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var eUserInfo = user as IUser;
@@ -126,7 +126,7 @@ namespace echoBot
 
         [Command("purge")]
         [Summary("Purges a number of messages")]
-        public async Task PurgeAsync([Name("[amount]")][Summary("The amount of messages to purge")] int amount)
+        public async Task PurgeAsync([Name("[amount]")][Summary("The amount of messages to purge")] int amount, [Remainder] string? _ = null)
         {
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             l.Debug(amount.ToString(), "PurgeAsync");
@@ -167,7 +167,7 @@ namespace echoBot
 
         [Command("logchannel")]
         [Summary("Sets the log channel")]
-        public async Task LogChannelAsync([Name("[channel]")][Summary("The channel to set the log channel to")] Discord.WebSocket.SocketTextChannel channel)
+        public async Task LogChannelAsync([Name("[channel]")][Summary("The channel to set the log channel to")] Discord.WebSocket.SocketTextChannel channel, [Remainder] string? _ = null)
         {
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             l.Debug(channel.Name, "LogChannelAsync");

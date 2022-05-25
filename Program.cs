@@ -6,21 +6,21 @@ using System.Timers;
 public class GlobalConfig
 {
     public string token { get; set; } = "";
-    public string gPrefix { get; set; } = ";;";
+    public string prefix { get; set; } = "";
     public string status { get; set; } = "";
-    public string[] game { get; set; } = new string[0];
-    public string[] gameType { get; set; } = new string[0];
+    public string[] game { get; set; } = new string[1];
+    public string[] gameType { get; set; } = new string[1];
 }
 public class ServerConfig
 {
     public ulong id { get; set; } = 0;
-    public string prefix { get; set; } = ";;";
+    public string prefix { get; set; } = "No Prefix Set";
     public ulong logChannel { get; set; } = 0;
 }
 public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
-    public static string version = "0.0.3 Dev";
+    public static string version = "0.0.5 Dev";
     public static Discord.WebSocket.DiscordSocketClient? _client;
     public static Discord.WebSocket.DiscordSocketConfig config = new Discord.WebSocket.DiscordSocketConfig();
     public static GlobalConfig Config = new GlobalConfig();
@@ -31,7 +31,7 @@ public class Program
     int CurrentActivity = 0;
     public async Task MainAsync()
     {
-        Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("config.json"));
+        Console.Title = "echoBot " + version;
         config = new Discord.WebSocket.DiscordSocketConfig
         {
             AlwaysDownloadUsers = true,
@@ -41,11 +41,28 @@ public class Program
         };
         _client = new Discord.WebSocket.DiscordSocketClient(config);
 
+
         Directory.CreateDirectory("logs");
         if (File.Exists("logs/latest.log"))
-            File.Move("logs/latest.log", "logs/log-" + File.GetCreationTime("logs/latest.log").ToString("yyyy-MM-dd-HH-mm-ss") + ".log");
+        {
+            File.Move("logs/latest.log", "logs/log-" + File.GetLastWriteTime("logs/latest.log").ToString("yyyy-MM-dd-HH-mm-ss") + ".log", true);
+            File.Delete("logs/latest.log");
+        }
 
         _client.Log += Log;
+
+        if (File.Exists("config.json"))
+        {
+            Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("config.json"));
+        }
+        else
+        {
+            l.Critical("config.json not found!");
+            File.WriteAllText("config.json", JsonConvert.SerializeObject(Config, Formatting.Indented));
+            l.Critical("Please fill out the config.json file and restart the bot.");
+        }
+
+
 
         if (string.IsNullOrEmpty(Config.token))
         {
@@ -73,32 +90,43 @@ public class Program
 
         var ch = new echoBot.CommandHandler(_client, new CommandService(csc));
         await ch.InstallCommandsAsync();
-        if (File.Exists("servers.json"))
-            ServerConfigs = JsonConvert.DeserializeObject<List<ServerConfig>>(File.ReadAllText("servers.json"));
-        List<ulong> servers = new List<ulong>();
-        foreach (var server in _client.Guilds)
-        {
-            servers.Clear();
-            for (var i = 0; i < ServerConfigs.Count; i++)
-            {
-                servers.Add(ServerConfigs[i].id);
-            }
-            l.Info($"Adding server {server.Name} to config", "MainAsync");
-            if (!servers.Contains(server.Id))
-                ServerConfigs.Add(new ServerConfig
-                {
-                    id = server.Id,
-                    prefix = Config.gPrefix,
-                    logChannel = 0
-                });
 
-        }
-        File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+        _client.Ready += () =>
+        {
+            if (File.Exists("servers.json"))
+                ServerConfigs = JsonConvert.DeserializeObject<List<ServerConfig>>(File.ReadAllText("servers.json"));
+            List<ulong> servers = new List<ulong>();
+            foreach (var server in _client.Guilds)
+            {
+                servers.Clear();
+                for (var i = 0; i < ServerConfigs.Count; i++)
+                {
+                    servers.Add(ServerConfigs[i].id);
+                }
+
+                if (!servers.Contains(server.Id))
+                {
+                    l.Verbose($"Adding server {server.Name} to config", "MainAsync");
+                    ServerConfigs.Add(new ServerConfig
+                    {
+                        id = server.Id,
+                        prefix = Config.prefix,
+                        logChannel = 0
+                    });
+                }
+
+            }
+            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+            _client.Ready -= () =>
+            {
+                return Task.CompletedTask;
+            };
+            return Task.CompletedTask;
+        };
 
         var timer = new System.Timers.Timer(15000);
         timer.Elapsed += async (sender, e) =>
         {
-            l.Debug("Timer ticked", "MainAsync");
             if (CurrentActivity >= Config.game.Length)
                 CurrentActivity = 0;
             await _client.SetActivityAsync(new Game(Config.game[CurrentActivity], (ActivityType)Enum.Parse(typeof(ActivityType), Config.gameType[CurrentActivity]), details: "https://warp.tf/"));
@@ -106,23 +134,45 @@ public class Program
         };
         timer.Start();
 
+        _client.JoinedGuild += (g) =>
+        {
+            l.Info($"Adding server {g.Name} to config", "MainAsync");
+            ServerConfigs.Add(new ServerConfig
+            {
+                id = g.Id,
+                prefix = Config.prefix,
+                logChannel = 0
+            });
+
+            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+            return Task.CompletedTask;
+        };
+        _client.LeftGuild += (g) =>
+        {
+            l.Info($"Removing server {g.Name} from config", "MainAsync");
+            ServerConfigs.Remove(ServerConfigs.Find(x => x.id == g.Id));
+            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+            return Task.CompletedTask;
+        };
+
 
         // console commands
         while (true)
         {
-            string input = Console.ReadLine();
+            string? input = Console.ReadLine();
             switch (input)
             {
                 case "exit":
                     File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
-                    Task.Delay(1000).Wait();
+                    await _client.SetStatusAsync(UserStatus.Invisible);
+                    await _client.LogoutAsync();
                     Environment.Exit(0);
                     break;
                 case "reload":
                     Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("config.json"));
                     break;
                 case "save":
-                    servers = new List<ulong>();
+                    var servers = new List<ulong>();
                     foreach (var server in _client.Guilds)
                     {
                         servers.Clear();
@@ -135,7 +185,7 @@ public class Program
                             ServerConfigs.Add(new ServerConfig
                             {
                                 id = server.Id,
-                                prefix = Config.gPrefix,
+                                prefix = Config.prefix,
                                 logChannel = 0
                             });
 
@@ -156,6 +206,28 @@ public class Program
 
         // Block this task until the program is closed.
         // await Task.Delay(-1);
+    }
+    public static void SaveServers()
+    {
+        List<ulong> servers = new List<ulong>();
+        foreach (var server in _client.Guilds)
+        {
+            servers.Clear();
+            for (var i = 0; i < ServerConfigs.Count; i++)
+            {
+                servers.Add(ServerConfigs[i].id);
+            }
+            l.Info($"Adding server {server.Name} to config", "MainAsync");
+            if (!servers.Contains(server.Id))
+                ServerConfigs.Add(new ServerConfig
+                {
+                    id = server.Id,
+                    prefix = Config.prefix,
+                    logChannel = 0
+                });
+
+        }
+        File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
     }
     public Task Log(LogMessage msg)
     {
@@ -184,10 +256,10 @@ public class Program
     }
     public static EmbedBuilder DefaultEmbed()
     {
-        return new EmbedBuilder().WithColor(Color.DarkPurple).WithCurrentTimestamp().WithFooter(new EmbedFooterBuilder()
+        return new EmbedBuilder().WithColor(new Color(0xff6000)).WithCurrentTimestamp().WithFooter(new EmbedFooterBuilder()
         {
             Text = $"echoBot {version}",
-            IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096"
+            IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/22164f8f9a54c52528234ba7812cf892.png?size=4096"
         });
     }
     public static ServerConfig GetServerConfig(ulong id)
@@ -219,7 +291,14 @@ public class l
     {
         if (msg.Severity <= Program.config.LogLevel)
             Console.WriteLine($"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message} {msg.Exception}");
-        File.AppendAllText("logs/latest.log", $"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message} {msg.Exception}\n");
+        try
+        {
+            File.AppendAllText("logs/latest.log", $"[{System.DateTime.Now.ToString()}] [{msg.Severity}] [{msg.Source}] {msg.Message} {msg.Exception}\n");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to write to log file: {e.Message}");
+        }
     }
     public static void Debug(string msg, string source = "?")
     {

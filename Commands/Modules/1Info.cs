@@ -31,33 +31,66 @@ namespace echoBot
 
 
         [Command("help")]
-        [Summary("Shows the new help menu using reactions")]
-        public async Task HelpAsync()
+        [Summary("Shows a list of commands or info about a specified command")]
+        public async Task HelpAsync([Remainder][Name("<command>")][Summary("The command to get help for")] string? command = null)
         {
             var e = Program.DefaultEmbed();
             var m = CommandHandler._commands.Modules.ToArray()[0];
             List<ModuleInfo> ml = CommandHandler._commands.Modules.ToList();
-            e.Title = $"Help (1/{ml.Count})";
-            e.Description = "[required] <optional>";
-            var v = "";
-            var p = "";
-            foreach (var cmd in m.Commands)
+            if (command == null)
             {
-                if (cmd.Parameters.Count > 0)
+                e.Title = $"Help (1/{ml.Count})";
+                e.Description = "[required] <optional>";
+                var v = "";
+                var p = "";
+                foreach (var cmd in m.Commands)
                 {
-                    foreach (var par in cmd.Parameters)
+                    if (cmd.Parameters.Count > 0)
                     {
-                        p += $" {par.Name}";
+                        foreach (var par in cmd.Parameters)
+                        {
+                            if (par.Name != "_")
+                                p += $" {par.Name}";
+                        }
+                        // p.TrimEnd(' ');
                     }
-                    // p.TrimEnd(' ');
+                    v += $"{Program.Config.prefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                    p = " ";
                 }
-                v += $"{Program.Config.gPrefix}{cmd.Name}{p} - {cmd.Summary}\n";
-                p = " ";
+                e.AddField(m.Name, v);
+                var c = new ComponentBuilder().WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true).WithButton("Next", "help-button-next").Build();
+                var msg = await ReplyAsync("", false, e.Build(), components: c, messageReference: new MessageReference(Context.Message.Id));
+                CommandHandler.HelpLinks.Add(new HelpLink(msg, Context.User.Id));
+                var pages = (int)Math.Ceiling((double)ml.Count);
             }
-            e.AddField(m.Name, v);
-            var c = new ComponentBuilder().WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true).WithButton("Next", "help-button-next").Build();
-            var msg = await ReplyAsync("", false, e.Build(), components: c);
-            var pages = (int)Math.Ceiling((double)ml.Count);
+            else
+            {
+                List<Embed> embeds = new List<Embed>();
+                var cmd = CommandHandler._commands.Search(command);
+                if (cmd.IsSuccess)
+                {
+                    for (var i = 0; i < cmd.Commands.Count; i++)
+                    {
+                        e.WithTitle($"{string.Join(", ", cmd.Commands[i].Command.Aliases)}".TrimEnd(' ', ','));
+                        e.WithDescription(cmd.Commands[i].Command.Summary);
+                        foreach (var par in cmd.Commands[i].Command.Parameters)
+                        {
+                            if (par.Name != "_")
+                                e.AddField(par.Name, par.Summary);
+                        }
+                        if (!embeds.Contains(e.Build()))
+                            embeds.Add(e.Build());
+                    }
+                }
+                else
+                {
+                    e.WithTitle("Command not found");
+                    e.WithColor(Color.Red);
+                    e.WithDescription($"Try `{Program.Config.prefix}help` to see a list of commands");
+                    embeds.Add(e.Build());
+                }
+                await ReplyAsync("", false, embeds: embeds.ToArray());
+            }
         }
 
 
@@ -65,7 +98,7 @@ namespace echoBot
         [Command("botinfo")]
         [Summary("Returns info about the bot")]
         [Alias("bot", "info")]
-        public async Task BotInfoAsync()
+        public async Task BotInfoAsync([Remainder] string? _ = null)
         {
             var e = new EmbedBuilder();
             e.Color = Color.DarkPurple;
@@ -82,11 +115,11 @@ namespace echoBot
         [Command("ping")]
         [Summary("Returns the bot's ping")]
         [Alias("pong")]
-        public async Task PingAsync()
+        public async Task PingAsync([Remainder] string? _ = null)
         {
             var e = new EmbedBuilder();
             e.Color = Color.DarkPurple;
-            if (Context.Message.Content.StartsWith(Program.Config.gPrefix + "ping", true, null))
+            if (Context.Message.Content.StartsWith(Program.Config.prefix + "ping", true, null))
                 e.Title = "Pong!";
             else
                 e.Title = "Ping!";
@@ -98,7 +131,7 @@ namespace echoBot
         [Command("uptime")]
         [Summary("Returns the bot's uptime")]
         [Alias("up")]
-        public async Task UptimeAsync()
+        public async Task UptimeAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = "Uptime";
@@ -116,7 +149,7 @@ namespace echoBot
 
         [Command("stats")]
         [Summary("Returns the bot's stats")]
-        public async Task StatsAsync()
+        public async Task StatsAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = "Stats";
@@ -142,7 +175,7 @@ namespace echoBot
         [Command("serverinfo")]
         [Summary("Returns the server's info")]
         [Alias("server", "guild")]
-        public async Task ServerInfoAsync()
+        public async Task ServerInfoAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = Context.Guild.Name;
@@ -158,7 +191,7 @@ namespace echoBot
 
         [Command("prefix")]
         [Summary("Gets or sets the bot's prefix")]
-        public async Task PrefixAsync([Name("<prefix>")][Summary("The prefix to set")] string? prefix = null)
+        public async Task PrefixAsync([Name("<prefix>")][Summary("The prefix to set")] string? prefix = null, [Remainder] string? _ = null)
         {
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var e = Program.DefaultEmbed();

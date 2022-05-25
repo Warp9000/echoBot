@@ -13,7 +13,7 @@ namespace echoBot
     {
         [Command("ping")]
         [Summary("Pings the bot")]
-        public async Task PingAsync()
+        public async Task PingAsync([Remainder] string? _ = null)
         {
             await ReplyAsync("Pong!" + Environment.NewLine + "Ping: " + Context.Client.Latency);
         }

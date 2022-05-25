@@ -14,7 +14,7 @@ namespace echoBot
         [Summary
         ("Returns info about a user")]
         [Alias("user", "whois")]
-        public async Task UserInfoAsync([Name("<user>")][Summary("The user to show info about")] Discord.WebSocket.SocketUser? user = null)
+        public async Task UserInfoAsync([Name("<user>")][Summary("The user to show info about")] Discord.WebSocket.SocketUser? user = null, [Remainder] string? _ = null)
         {
             var userInfo = user ?? Context.User;
             var eUserInfo = userInfo as Discord.WebSocket.SocketGuildUser;
@@ -63,7 +63,7 @@ namespace echoBot
         [Command("avatar")]
         [Summary("Returns the user's avatar")]
         [Alias("pfp")]
-        public async Task AvatarAsync([Name("<user>")][Summary("The user to show avatar of")] Discord.WebSocket.SocketUser? user = null)
+        public async Task AvatarAsync([Name("<user>")][Summary("The user to show avatar of")] Discord.WebSocket.SocketUser? user = null, [Remainder] string? _ = null)
         {
             var userInfo = user ?? Context.User;
             var e = Program.DefaultEmbed();

@@ -13,7 +13,7 @@ namespace echoBot
         [Command("roll")]
         [Summary("Rolls a random number")]
         [Alias("rand", "random")]
-        public async Task RollAsync([Name("<max>")][Summary("The max number to roll")] int max = 100)
+        public async Task RollAsync([Name("<max>")][Summary("The max number to roll")] int max = 100, [Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = "Roll";
@@ -24,7 +24,7 @@ namespace echoBot
         [Command("flip")]
         [Summary("Flips a coin")]
         [Alias("coinflip", "flipcoin")]
-        public async Task FlipAsync()
+        public async Task FlipAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = "Flip";
@@ -35,11 +35,12 @@ namespace echoBot
         [Command("8ball")]
         [Summary("Ask the magic 8 ball a question")]
         [Alias("8")]
-        public async Task EightBallAsync([Name("[question]")][Summary("The question to ask")] string question)
+        public async Task EightBallAsync([Remainder][Name("[question]")][Summary("The question to ask")] string question)
         {
             var e = Program.DefaultEmbed();
             e.Title = "8Ball";
-            e.Description = $"{EightBall[new Random().Next(0, EightBall.Length)]}";
+            int seed = question.GetHashCode();
+            e.Description = $"{EightBall[new Random(seed).Next(0, EightBall.Length)]}";
             await ReplyAsync("", false, e.Build());
         }
 
@@ -68,7 +69,7 @@ namespace echoBot
 
         [Command("fox")]
         [Summary("Gets a random fox image")]
-        public async Task FoxAsync()
+        public async Task FoxAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = Fox[new Random().Next(0, Fox.Length)];
@@ -88,7 +89,7 @@ namespace echoBot
 
         [Command("duck")]
         [Summary("Gets a random duck image")]
-        public async Task DuckAsync()
+        public async Task DuckAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = Duck[new Random().Next(0, Duck.Length)];
@@ -105,7 +106,7 @@ namespace echoBot
 
         [Command("shiba")]
         [Summary("Gets a random shiba image")]
-        public async Task ShibaAsync()
+        public async Task ShibaAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = Shiba[new Random().Next(0, Shiba.Length)];
@@ -122,7 +123,7 @@ namespace echoBot
 
         [Command("cat")]
         [Summary("Gets a random cat image")]
-        public async Task CatAsync()
+        public async Task CatAsync([Remainder] string? _ = null)
         {
             var e = Program.DefaultEmbed();
             e.Title = Cat[new Random().Next(0, Cat.Length)];

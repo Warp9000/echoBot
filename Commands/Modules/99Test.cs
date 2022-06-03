@@ -12,13 +12,15 @@ namespace echoBot
     {
         [Command("shutdown")]
         [Summary("Shuts down the bot")]
-        public async Task StopAsync([Name("<time>")][Summary("Ammount of time in minutes for the bot to shutdown for")] float? time, [Remainder] string? _ = null)
+        [Alias("stop")]
+        public async Task PingAsync([Remainder] string? _ = null)
         {
             if (Context.User.Id == Program.Warp)
             {
                 await ReplyAsync("Shutting down...");
                 await Context.Client.SetStatusAsync(UserStatus.Invisible);
                 await Context.Client.LogoutAsync();
+                Environment.Exit(0);
             }
             else
             {

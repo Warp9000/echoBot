@@ -12,7 +12,7 @@ namespace echoBot
     {
         [Command("kick")]
         [Summary("Kicks a user")]
-        public async Task KickAsync([Name("[user]")][Summary("The user to kick")] Discord.WebSocket.SocketUser user, [Name("<reason>")][Summary("The reason for the kick")] string? reason = null)
+        public async Task KickAsync([Name("[user]")][Summary("The user to kick")] Discord.WebSocket.SocketUser user, [Remainder][Name("<reason>")][Summary("The reason for the kick")] string? reason = null)
         {
             var executor = Context.User as Discord.WebSocket.SocketGuildUser;
             var eUserInfo = user as Discord.WebSocket.SocketGuildUser;

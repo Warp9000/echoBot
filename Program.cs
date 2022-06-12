@@ -127,6 +127,8 @@ public class Program
         var timer = new System.Timers.Timer(15000);
         timer.Elapsed += async (sender, e) =>
         {
+            if (_client.LoginState != LoginState.LoggedIn)
+                return;
             if (CurrentActivity >= Config.game.Length)
                 CurrentActivity = 0;
             await _client.SetActivityAsync(new Game(Config.game[CurrentActivity], (ActivityType)Enum.Parse(typeof(ActivityType), Config.gameType[CurrentActivity]), details: "https://warp.tf/"));

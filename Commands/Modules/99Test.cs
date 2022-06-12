@@ -6,16 +6,26 @@ using System.Net;
 
 namespace echoBot
 {
-    [Group("test")]
     [Name("Test")]
     [Summary("Test commands")]
     public class TestCommands : ModuleBase<SocketCommandContext>
     {
-        [Command("ping")]
-        [Summary("Pings the bot")]
+        [Command("shutdown")]
+        [Summary("Shuts down the bot")]
+        [Alias("stop")]
         public async Task PingAsync([Remainder] string? _ = null)
         {
-            await ReplyAsync("Pong!" + Environment.NewLine + "Ping: " + Context.Client.Latency);
+            if (Context.User.Id == Program.Warp)
+            {
+                await ReplyAsync("Shutting down...");
+                await Context.Client.SetStatusAsync(UserStatus.Invisible);
+                await Context.Client.LogoutAsync();
+                Environment.Exit(0);
+            }
+            else
+            {
+                await ReplyAsync("You are not the owner of this bot!");
+            }
         }
     }
 

@@ -21,7 +21,7 @@ public class ServerConfig
 public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
-    public static string version = "0.6 Dev";
+    public static string version = "0.7 Dev";
     public static Discord.WebSocket.DiscordSocketClient? _client;
     public static Discord.WebSocket.DiscordSocketConfig config = new Discord.WebSocket.DiscordSocketConfig();
     public static GlobalConfig Config = new GlobalConfig();
@@ -118,7 +118,7 @@ public class Program
                 }
 
             }
-            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs, Formatting.Indented));
             _client.Ready -= () =>
             {
                 return Task.CompletedTask;
@@ -148,14 +148,14 @@ public class Program
                 logChannel = 0
             });
 
-            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs, Formatting.Indented));
             return Task.CompletedTask;
         };
         _client.LeftGuild += (g) =>
         {
             l.Info($"Removing server {g.Name} from config", "MainAsync");
             ServerConfigs.Remove(ServerConfigs.Find(x => x.id == g.Id));
-            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+            File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs, Formatting.Indented));
             return Task.CompletedTask;
         };
 
@@ -167,7 +167,7 @@ public class Program
             switch (input)
             {
                 case "exit":
-                    File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+                    File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs, Formatting.Indented));
                     await _client.SetStatusAsync(UserStatus.Invisible);
                     await _client.LogoutAsync();
                     Environment.Exit(0);
@@ -194,7 +194,7 @@ public class Program
                             });
 
                     }
-                    File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+                    File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs, Formatting.Indented));
                     break;
                 case "minimize":
                     // System.Windows.Forms.NotifyIcon notifyIcon = new System.Windows.Forms.NotifyIcon();
@@ -249,7 +249,7 @@ public class Program
                 });
 
         }
-        File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
+        File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs, Formatting.Indented));
     }
     public Task Log(LogMessage msg)
     {

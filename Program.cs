@@ -2,8 +2,7 @@
 using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
-using System.Timers;
-using System.Windows.Forms;
+
 
 public class GlobalConfig
 {
@@ -198,17 +197,17 @@ public class Program
                     File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
                     break;
                 case "minimize":
-                    System.Windows.Forms.NotifyIcon notifyIcon = new System.Windows.Forms.NotifyIcon();
-                    notifyIcon.Icon = new System.Drawing.Icon("icon.ico");
-                    notifyIcon.Click += (sender, e) =>
-                    {
-                        notifyIcon.Visible = false;
-                        notifyIcon.Dispose();
-                        notifyIcon = null;
-                        Console.WriteLine("Minimized");
-                    };
-                    notifyIcon.ShowBalloonTip(1000, "echoBot", "echoBot is running in the background.", System.Windows.Forms.ToolTipIcon.Info);
-                    notifyIcon.Text = "echoBot";
+                    // System.Windows.Forms.NotifyIcon notifyIcon = new System.Windows.Forms.NotifyIcon();
+                    // notifyIcon.Icon = new System.Drawing.Icon("icon.ico");
+                    // notifyIcon.Click += (sender, e) =>
+                    // {
+                    //     notifyIcon.Visible = false;
+                    //     notifyIcon.Dispose();
+                    //     notifyIcon = null;
+                    //     Console.WriteLine("Minimized");
+                    // };
+                    // notifyIcon.ShowBalloonTip(1000, "echoBot", "echoBot is running in the background.", System.Windows.Forms.ToolTipIcon.Info);
+                    // notifyIcon.Text = "echoBot";
                     break;
                 case "help":
                     Console.WriteLine("exit - exits the program");

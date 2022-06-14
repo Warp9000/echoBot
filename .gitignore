@@ -6,3 +6,6 @@ config.json
 servers.json
 osu.json
 logs/
+beatmap.json
+
+scores.json

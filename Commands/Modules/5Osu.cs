@@ -61,7 +61,7 @@ namespace echoBot
             client.DefaultRequestHeaders.Add("Authorization", "Bearer " + cc.access_token);
             try
             {
-                await ReplyAsync("```cached```\n`token type`: " + cc.token_type + "\n`expires in`: " + ((int)(cc.created.AddSeconds(cc.expires_in) - DateTime.Now).TotalSeconds) + " seconds" + "\n`access token`: " + cc.access_token);
+                await ReplyAsync("```fetched now!```\n`token type`: " + cc.token_type + "\n`expires in`: " + ((int)(cc.created.AddSeconds(cc.expires_in) - DateTime.Now).TotalSeconds) + " seconds" + "\n`access token`: " + cc.access_token);
             }
             catch (Exception e)
             {

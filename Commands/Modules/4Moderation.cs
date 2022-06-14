@@ -25,7 +25,7 @@ namespace echoBot
                 if (Context.Guild.GetUser(user.Id) == null)
                 {
                     var em = Program.DefaultEmbed();
-                    em.Color = Color.Red;
+                    em.Color = Discord.Color.Red;
                     em.Title = "Error";
                     em.Description = $"Unkown error, user was not kicked";
                     await ReplyAsync("", false, em.Build());
@@ -34,7 +34,7 @@ namespace echoBot
 
                 var e = Program.DefaultEmbed();
                 e.Title = "Kicked";
-                e.Color = Color.Green;
+                e.Color = Discord.Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully kicked by {executor.Username}#{executor.Discriminator}";
                 await ReplyAsync("", false, e.Build());
                 Program.Log("Kick", $"{user.Username}#{user.Discriminator} was kicked", Context);
@@ -42,7 +42,7 @@ namespace echoBot
             else
             {
                 var e = Program.DefaultEmbed();
-                e.Color = Color.Red;
+                e.Color = Discord.Color.Red;
                 e.Title = "Error";
                 e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
@@ -64,7 +64,7 @@ namespace echoBot
                 if (Context.Guild.GetUser(user.Id) == null)
                 {
                     var em = Program.DefaultEmbed();
-                    em.Color = Color.Red;
+                    em.Color = Discord.Color.Red;
                     em.Title = "Error";
                     em.Description = $"Unkown error, user was not banned";
                     await ReplyAsync("", false, em.Build());
@@ -73,7 +73,7 @@ namespace echoBot
 
                 var e = Program.DefaultEmbed();
                 e.Title = "Banned";
-                e.Color = Color.Green;
+                e.Color = Discord.Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully banned by {executor.Username}#{executor.Discriminator}";
                 await ReplyAsync("", false, e.Build());
                 Program.Log("Ban", $"{user.Username}#{user.Discriminator} was banned", Context);
@@ -81,7 +81,7 @@ namespace echoBot
             else
             {
                 var e = Program.DefaultEmbed();
-                e.Color = Color.Red;
+                e.Color = Discord.Color.Red;
                 e.Title = "Error";
                 e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
@@ -100,7 +100,7 @@ namespace echoBot
                 if (Context.Guild.GetUser(user.Id) != null)
                 {
                     var em = Program.DefaultEmbed();
-                    em.Color = Color.Red;
+                    em.Color = Discord.Color.Red;
                     em.Title = "Error";
                     em.Description = $"{user.Username}#{user.Discriminator} is not banned";
                     await ReplyAsync("", false, em.Build());
@@ -109,7 +109,7 @@ namespace echoBot
                 await executor.Guild.RemoveBanAsync(user);
                 var e = Program.DefaultEmbed();
                 e.Title = "Unbanned";
-                e.Color = Color.Green;
+                e.Color = Discord.Color.Green;
                 e.Description = $"{user.Username}#{user.Discriminator} was succesfully unbanned by {executor.Username}#{executor.Discriminator}";
                 await ReplyAsync("", false, e.Build());
                 Program.Log("Unban", $"{user.Username}#{user.Discriminator} was unbanned", Context);
@@ -117,7 +117,7 @@ namespace echoBot
             else
             {
                 var e = Program.DefaultEmbed();
-                e.Color = Color.Red;
+                e.Color = Discord.Color.Red;
                 e.Title = "Error";
                 e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
@@ -137,7 +137,7 @@ namespace echoBot
                 if (ch == null || messages.Count() <= 0)
                 {
                     var em = Program.DefaultEmbed();
-                    em.Color = Color.Red;
+                    em.Color = Discord.Color.Red;
                     em.Title = "Error";
                     em.Description = "No messages to purge";
                     await ReplyAsync("", false, em.Build());
@@ -146,7 +146,7 @@ namespace echoBot
                 await ch.DeleteMessagesAsync(messages);
                 var e = Program.DefaultEmbed();
                 e.Title = "Purged";
-                e.Color = Color.Green;
+                e.Color = Discord.Color.Green;
                 var purged = messages.Count() - 1;
                 e.Description = $"{purged}/{amount} messages were purged by {executor.Username}#{executor.Discriminator}";
                 var m = await ReplyAsync("", false, e.Build());
@@ -158,7 +158,7 @@ namespace echoBot
             else
             {
                 var e = Program.DefaultEmbed();
-                e.Color = Color.Red;
+                e.Color = Discord.Color.Red;
                 e.Title = "Error";
                 e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());
@@ -180,14 +180,14 @@ namespace echoBot
                     if (c.id == Context.Guild.Id)
                     {
                         c.logChannel = channel.Id;
-                        e.Color = Color.Green;
+                        e.Color = Discord.Color.Green;
                         e.Description = $"The log channel has been set to <#{channel.Id}>";
                         break;
                     }
                     else
                     {
                         e.Title = "Error";
-                        e.Color = Color.Red;
+                        e.Color = Discord.Color.Red;
                         e.Description = $"The log channel has not been set";
                     }
                 }
@@ -196,7 +196,7 @@ namespace echoBot
             else
             {
                 var e = Program.DefaultEmbed();
-                e.Color = Color.Red;
+                e.Color = Discord.Color.Red;
                 e.Title = "Error";
                 e.Description = "You don't have the permissions to do that!";
                 await ReplyAsync("", false, e.Build());

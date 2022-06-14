@@ -1,7 +1,9 @@
-﻿using Discord;
+﻿using System.Runtime.InteropServices;
+using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
 using System.Timers;
+using System.Windows.Forms;
 
 public class GlobalConfig
 {
@@ -195,10 +197,24 @@ public class Program
                     }
                     File.WriteAllText("servers.json", JsonConvert.SerializeObject(ServerConfigs));
                     break;
+                case "minimize":
+                    System.Windows.Forms.NotifyIcon notifyIcon = new System.Windows.Forms.NotifyIcon();
+                    notifyIcon.Icon = new System.Drawing.Icon("icon.ico");
+                    notifyIcon.Click += (sender, e) =>
+                    {
+                        notifyIcon.Visible = false;
+                        notifyIcon.Dispose();
+                        notifyIcon = null;
+                        Console.WriteLine("Minimized");
+                    };
+                    notifyIcon.ShowBalloonTip(1000, "echoBot", "echoBot is running in the background.", System.Windows.Forms.ToolTipIcon.Info);
+                    notifyIcon.Text = "echoBot";
+                    break;
                 case "help":
                     Console.WriteLine("exit - exits the program");
                     Console.WriteLine("reload - reloads the config");
                     Console.WriteLine("save - saves the server configs");
+                    Console.WriteLine("minimize - minimizes the console");
                     Console.WriteLine("help - shows this message");
                     break;
                 default:
@@ -210,6 +226,10 @@ public class Program
         // Block this task until the program is closed.
         // await Task.Delay(-1);
     }
+    [DllImport("kernel32.dll")]
+    static extern void GetConsoleWindow();
+    [DllImport("user32.dll")]
+    static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
     public static void SaveServers()
     {
         List<ulong> servers = new List<ulong>();
@@ -259,7 +279,7 @@ public class Program
     }
     public static EmbedBuilder DefaultEmbed()
     {
-        return new EmbedBuilder().WithColor(new Color(0xff6000)).WithCurrentTimestamp().WithFooter(new EmbedFooterBuilder()
+        return new EmbedBuilder().WithColor(new Discord.Color(0xff6000)).WithCurrentTimestamp().WithFooter(new EmbedFooterBuilder()
         {
             Text = $"echoBot {version}",
             IconUrl = "https://cdn.discordapp.com/avatars/869399518267969556/22164f8f9a54c52528234ba7812cf892.png?size=4096"

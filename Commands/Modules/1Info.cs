@@ -85,7 +85,7 @@ namespace echoBot
                 else
                 {
                     e.WithTitle("Command not found");
-                    e.WithColor(Color.Red);
+                    e.WithColor(Discord.Color.Red);
                     e.WithDescription($"Try `{Program.Config.prefix}help` to see a list of commands");
                     embeds.Add(e.Build());
                 }
@@ -101,7 +101,7 @@ namespace echoBot
         public async Task BotInfoAsync([Remainder] string? _ = null)
         {
             var e = new EmbedBuilder();
-            e.Color = Color.DarkPurple;
+            e.Color = Discord.Color.DarkPurple;
             e.Title = "echoBot";
             e.Description = "By Warp#8703";
             e.ThumbnailUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096";
@@ -118,7 +118,7 @@ namespace echoBot
         public async Task PingAsync([Remainder] string? _ = null)
         {
             var e = new EmbedBuilder();
-            e.Color = Color.DarkPurple;
+            e.Color = Discord.Color.DarkPurple;
             if (Context.Message.Content.StartsWith(Program.Config.prefix + "ping", true, null))
                 e.Title = "Pong!";
             else
@@ -205,7 +205,7 @@ namespace echoBot
                 if (!executor.GuildPermissions.ManageGuild)
                 {
                     e.Description = "You don't have the permissions to do that!";
-                    e.Color = Color.Red;
+                    e.Color = Discord.Color.Red;
                     await ReplyAsync("", false, e.Build());
                     return;
                 }
@@ -215,14 +215,14 @@ namespace echoBot
                     {
                         e.Title = "Prefix";
                         c.prefix = prefix;
-                        e.Color = Color.Green;
+                        e.Color = Discord.Color.Green;
                         e.Description = $"The prefix has been set to `{prefix}`";
                         break;
                     }
                     else
                     {
                         e.Title = "Error";
-                        e.Color = Color.Red;
+                        e.Color = Discord.Color.Red;
                         e.Description = $"The prefix has not been set";
                     }
                 }

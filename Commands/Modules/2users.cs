@@ -19,23 +19,23 @@ namespace echoBot
             var userInfo = user ?? Context.User;
             var eUserInfo = userInfo as Discord.WebSocket.SocketGuildUser;
             l.Debug(userInfo.Username + "#" + userInfo.Discriminator, "UserInfoAsync");
-            Color c = new Color(0, 0, 0);
+            Discord.Color c = new Discord.Color(0, 0, 0);
             switch (eUserInfo.Status)
             {
                 case UserStatus.Online:
-                    c = new Color(59, 165, 93);
+                    c = new Discord.Color(59, 165, 93);
                     break;
                 case UserStatus.Idle:
-                    c = new Color(250, 168, 26);
+                    c = new Discord.Color(250, 168, 26);
                     break;
                 case UserStatus.DoNotDisturb:
-                    c = new Color(237, 66, 69);
+                    c = new Discord.Color(237, 66, 69);
                     break;
                 case UserStatus.Offline:
-                    c = new Color(116, 127, 141);
+                    c = new Discord.Color(116, 127, 141);
                     break;
                 default:
-                    c = new Color(255, 0, 255);
+                    c = new Discord.Color(255, 0, 255);
                     break;
             }
 

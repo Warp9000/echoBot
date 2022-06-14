@@ -17,7 +17,7 @@ namespace echoBot
         {
             var builder = new EmbedBuilder();
             builder.WithFooter(CommandHandler.GetFooter());
-            builder.WithColor(Color.DarkPurple);
+            builder.WithColor(Discord.Color.DarkPurple);
             builder.WithCurrentTimestamp();
             List<Embed> embeds = new List<Embed>();
             if (command == null)
@@ -65,7 +65,7 @@ namespace echoBot
                 else
                 {
                     builder.WithTitle("Command not found");
-                    builder.WithColor(Color.Red);
+                    builder.WithColor(Discord.Color.Red);
                     builder.WithDescription($"Try `{Program.Config.prefix}help` to see a list of commands");
                     embeds.Add(builder.Build());
                 }

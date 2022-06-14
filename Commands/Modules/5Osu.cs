@@ -1,11 +1,7 @@
-using System.Net.WebSockets;
-using Discord;
 using Discord.Commands;
-using System.Net;
-using System.Net.Sockets;
 using Newtonsoft.Json;
 using System.Text;
-using System.Collections;
+
 
 namespace echoBot
 {
@@ -77,6 +73,8 @@ namespace echoBot
 
         public class OsuBeatmap
         {
+            public string error = "none";
+            // --------------------------------------------------
             public int beatmapset_id;
             public float difficulty_rating;
             public int id;
@@ -146,7 +144,7 @@ namespace echoBot
 
         [Command("beatmap")]
         [Summary("get beatmap info")]
-        public async Task Beatmap([Name("[id]")][Summary("the beatmap id")] int? beatmapId, [Remainder] string? _ = null)
+        public async Task Beatmap([Name("[query]")][Summary("name or id to lookup")][Remainder] string? beatmapId)
         {
             try
             {
@@ -158,37 +156,40 @@ namespace echoBot
                 }
                 if (beatmapId == null)
                 {
-                    await ReplyAsync("beatmap id is null");
+                    await ReplyAsync("query is null");
                     return;
                 }
 
-                var request = new HttpRequestMessage(HttpMethod.Get, RequestUrl + "beatmaps/" + beatmapId);
+                var url = RequestUrl + "beatmaps/lookup";
+                if (int.TryParse(beatmapId, out _))
+                {
+                    url += "?id=" + beatmapId;
+                }
+                else
+                {
+                    url += "?filename=" + beatmapId;
+                }
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", cc.access_token);
                 var responseMessage = await client.SendAsync(request);
 
                 var s = responseMessage.Content.ReadAsStringAsync().Result;
-                // s = JsonPrettify(s);
-                // if (s.Length > 2000)
-                // {
-                //     await ReplyAsync("```json\n" + s.Substring(0, Math.Min(s.Length, 1986)) + "\n```");
-                //     await ReplyAsync("```json\n" + s.Substring(1986, Math.Min(s.Length - 1986, 1986)) + "\n```");
-                //     if (s.Length > 4000)
-                //     {
-                //         await ReplyAsync("`Content continues...`");
-                //     }
-                // }
-                // else
-                //     await ReplyAsync(s);
+                File.WriteAllText("beatmap.json", "/*\n" + responseMessage.StatusCode + "\n\n" + responseMessage.Headers.ToString() + "\n*/\n" + JsonPrettify(s));
 
-                // embed
                 var map = JsonConvert.DeserializeObject<OsuBeatmap>(s);
+
+                if (map.error != "none")
+                {
+                    await ReplyAsync("```Error: " + map.error ?? "null" + "\nCode: " + responseMessage.StatusCode + "```");
+                    return;
+                }
 
                 var em = Program.DefaultEmbed();
                 em.Title = map.beatmapset.artist + " - " + map.beatmapset.title;
                 em.ThumbnailUrl = map.beatmapset.covers.list;
                 em.Description = $"**Length:** {new TimeSpan(0, 0, map.total_length).ToString(@"mm\:ss")} **BPM:** {map.bpm}\n[Download]({map.url})";
                 em.AddField($"{map.mode} - {map.version}",
-                $"**▸Difficulty:** {map.difficulty_rating} **▸Max Combo:** {map.max_combo}\n" +
+                $"**▸Difficulty:** {map.difficulty_rating} **▸Max Combo:** {map.max_combo.ToString() ?? "NaN"}\n" +
                 $"**▸AR:** {map.ar} **▸OD:** {map.accuracy} **▸CS:** {map.cs} **▸HP:** {map.drain}\n" +
                 "pp in progress...");
 
@@ -197,9 +198,137 @@ namespace echoBot
             catch (Exception e)
             {
                 l.Error(e.Message, "Beatmap");
-                l.Error(e.StackTrace, "Beatmap");
+                l.Error(e.StackTrace ?? "no stack trace", "Beatmap");
+                await ReplyAsync("```\n" + e.ToString() + "\n```");
             }
         }
+
+        public class OsuScore
+        {
+            public string error = "none";
+            // --------------------------------------------------
+            public int id;
+            public int best_id;
+            public int user_id;
+            public float accuracy;
+            public string[]? mods;
+            public int score;
+            public int max_combo;
+            public bool perfect;
+            public OsuScoreStatistics statistics = new OsuScoreStatistics();
+            public bool passed;
+            public float pp;
+            public string rank = "";
+            public DateTime created_at;
+            public string mode = "";
+            public int mode_int;
+            public bool replay;
+            // --------------------------------------------------
+            public OsuBeatmap? beatmap;
+            public OsuBeatmapset? beatmapset;
+            public int? rank_country;
+            public int? rank_global;
+            public float? weight;
+            public int? user;
+            public string? match;
+        }
+        public class OsuScoreJson
+        {
+            public string error = "none";
+            public OsuScore[] scores;
+        }
+        public class OsuScoreStatistics
+        {
+            [JsonProperty("count_50")]
+            public int count_50;
+            [JsonProperty("count_100")]
+            public int count_100;
+            [JsonProperty("count_300")]
+            public int count_300;
+            [JsonProperty("count_geki")]
+            public int count_geki;
+            [JsonProperty("count_katu")]
+            public int count_katu;
+            [JsonProperty("count_miss")]
+            public int count_miss;
+        }
+
+        [Command("scores")]
+        [Summary("get scores on map")]
+        public async Task Score([Name("[map]")][Summary("map id")] ulong? mapId, [Name("[user]")][Summary("user id")] ulong? userId)
+        {
+            try
+            {
+                await Context.Channel.TriggerTypingAsync();
+                if (!IsCredentialsValid())
+                {
+                    await ReplyAsync("credentials are not valid");
+                    return;
+                }
+                if (mapId == null)
+                {
+                    await ReplyAsync("map id is null");
+                    return;
+                }
+                if (userId == null)
+                {
+                    await ReplyAsync("user id is null");
+                    return;
+                }
+
+                var url = RequestUrl + $"beatmaps/{mapId}/scores/users/{userId}/all";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", cc.access_token);
+                var responseMessage = await client.SendAsync(request);
+
+                var s = responseMessage.Content.ReadAsStringAsync().Result;
+                File.WriteAllText("scores.json", "/*\n" + responseMessage.StatusCode + "\n\n" + responseMessage.Headers.ToString() + "\n*/\n" + JsonPrettify(s));
+
+                var scoresJson = JsonConvert.DeserializeObject<OsuScoreJson>(s) ?? new OsuScoreJson();
+
+                if (scoresJson.scores.Length == 0)
+                {
+                    await ReplyAsync("no scores found");
+                    return;
+                }
+
+                var url2 = RequestUrl + "beatmaps/lookup?id=" + mapId;
+                var request2 = new HttpRequestMessage(HttpMethod.Get, url2);
+                request2.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", cc.access_token);
+                var responseMessage2 = await client.SendAsync(request2);
+
+                var s2 = responseMessage2.Content.ReadAsStringAsync().Result;
+                File.WriteAllText("beatmap.json", "/*\n" + responseMessage2.StatusCode + "\n\n" + responseMessage2.Headers.ToString() + "\n*/\n" + JsonPrettify(s2));
+
+                var map = JsonConvert.DeserializeObject<OsuBeatmap>(s2);
+
+                if (map.error != "none")
+                {
+                    await ReplyAsync("```Error: " + map.error ?? "null" + "\nCode: " + responseMessage2.StatusCode + "```");
+                    return;
+                }
+
+
+                var em = Program.DefaultEmbed();
+                em.Title = map.beatmapset.artist + " - " + map.beatmapset.title;
+                em.ThumbnailUrl = map.beatmapset.covers.list;
+                foreach (var score in scoresJson.scores)
+                {
+                    em.AddField($"{score.mode} - {score.mods?.FirstOrDefault() ?? "No Mods"}",
+                    $"**▸pp:** {score.pp} **▸Acc:** {score.accuracy}\n" +
+                    $"**▸Score:** {score.score} **▸Combo:** {score.max_combo} ▸[{score.statistics.count_geki}/{score.statistics.count_300}/{score.statistics.count_katu}/{score.statistics.count_100}/{score.statistics.count_50}/{score.statistics.count_miss}]\n" +
+                    $"{score.created_at.ToString("yyyy/MM/dd HH:mm:ss")}");
+                }
+                await ReplyAsync("", embed: em.Build());
+            }
+            catch (Exception e)
+            {
+                l.Error(e.Message, "Score");
+                l.Error(e.StackTrace ?? "no stack trace", "Score");
+                await ReplyAsync("```\n" + e.ToString() + "\n```");
+            }
+        }
+
         public static string JsonPrettify(string json)
         {
             using (var stringReader = new StringReader(json))

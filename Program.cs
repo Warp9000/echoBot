@@ -20,7 +20,7 @@ public class ServerConfig
 public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
-    public static string version = "0.0.5 Dev";
+    public static string version = "0.6 Dev";
     public static Discord.WebSocket.DiscordSocketClient? _client;
     public static Discord.WebSocket.DiscordSocketConfig config = new Discord.WebSocket.DiscordSocketConfig();
     public static GlobalConfig Config = new GlobalConfig();
@@ -32,6 +32,7 @@ public class Program
     public async Task MainAsync()
     {
         Console.Title = "echoBot " + version;
+        Console.BufferHeight = 1000;
         config = new Discord.WebSocket.DiscordSocketConfig
         {
             AlwaysDownloadUsers = true,

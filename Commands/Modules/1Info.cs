@@ -34,62 +34,66 @@ namespace echoBot
         [Summary("Shows a list of commands or info about a specified command")]
         public async Task HelpAsync([Remainder][Name("<command>")][Summary("The command to get help for")] string? command = null)
         {
-            var e = Program.DefaultEmbed();
-            var m = CommandHandler._commands.Modules.ToArray()[0];
-            List<ModuleInfo> ml = CommandHandler._commands.Modules.ToList();
-            if (command == null)
+            try
             {
-                e.Title = $"Help (1/{ml.Count})";
-                e.Description = "[required] <optional>";
-                var v = "";
-                var p = "";
-                foreach (var cmd in m.Commands)
-                {
-                    if (cmd.Parameters.Count > 0)
-                    {
-                        foreach (var par in cmd.Parameters)
-                        {
-                            if (par.Name != "_")
-                                p += $" {par.Name}";
-                        }
-                        // p.TrimEnd(' ');
-                    }
-                    v += $"{Program.Config.prefix}{cmd.Name}{p} - {cmd.Summary}\n";
-                    p = " ";
-                }
-                e.AddField(m.Name, v);
-                var c = new ComponentBuilder().WithButton("Prev", "help-button-prev-f", ButtonStyle.Secondary, disabled: true).WithButton("Next", "help-button-next").Build();
-                var msg = await ReplyAsync("", false, e.Build(), components: c, messageReference: new MessageReference(Context.Message.Id));
-                CommandHandler.HelpLinks.Add(new HelpLink(msg, Context.User.Id));
-                var pages = (int)Math.Ceiling((double)ml.Count);
-            }
-            else
-            {
+                var builder = Program.DefaultEmbed();
                 List<Embed> embeds = new List<Embed>();
-                var cmd = CommandHandler._commands.Search(command);
-                if (cmd.IsSuccess)
+                if (command == null)
                 {
-                    for (var i = 0; i < cmd.Commands.Count; i++)
+                    builder.WithTitle("Help");
+                    builder.WithDescription("[required] <optional>");
+                    foreach (var item in CommandHandler._commands.Modules)
                     {
-                        e.WithTitle($"{string.Join(", ", cmd.Commands[i].Command.Aliases)}".TrimEnd(' ', ','));
-                        e.WithDescription(cmd.Commands[i].Command.Summary);
-                        foreach (var par in cmd.Commands[i].Command.Parameters)
+                        var v = "";
+                        var p = " ";
+                        foreach (var cmd in item.Commands)
                         {
-                            if (par.Name != "_")
-                                e.AddField(par.Name, par.Summary);
+                            if (cmd.Parameters.Count > 0)
+                            {
+                                foreach (var par in cmd.Parameters)
+                                {
+                                    if (par.Name != "_")
+                                        p += $" {par.Name}";
+                                }
+                                p.TrimEnd(' ');
+                            }
+                            v += $"{Program.Config.prefix}{cmd.Name}{p} - {cmd.Summary}\n";
+                            p = " ";
                         }
-                        if (!embeds.Contains(e.Build()))
-                            embeds.Add(e.Build());
+                        builder.AddField(item.Name, v);
                     }
+                    embeds.Add(builder.Build());
                 }
                 else
                 {
-                    e.WithTitle("Command not found");
-                    e.WithColor(Discord.Color.Red);
-                    e.WithDescription($"Try `{Program.Config.prefix}help` to see a list of commands");
-                    embeds.Add(e.Build());
+                    var cmd = CommandHandler._commands.Search(command);
+                    if (cmd.IsSuccess)
+                    {
+                        for (var i = 0; i < cmd.Commands.Count; i++)
+                        {
+                            builder.WithTitle($"{string.Join(", ", cmd.Commands[i].Command.Aliases)}".TrimEnd(' ', ','));
+                            builder.WithDescription(cmd.Commands[i].Command.Summary);
+                            foreach (var par in cmd.Commands[i].Command.Parameters)
+                            {
+                                builder.AddField(par.Name, par.Summary);
+                            }
+                            if (!embeds.Contains(builder.Build()))
+                                embeds.Add(builder.Build());
+                        }
+                    }
+                    else
+                    {
+                        builder.WithTitle("Command not found");
+                        builder.WithColor(Discord.Color.Red);
+                        builder.WithDescription($"Try `{Program.Config.prefix}help` to see a list of commands");
+                        embeds.Add(builder.Build());
+                    }
                 }
                 await ReplyAsync("", false, embeds: embeds.ToArray());
+            }
+            catch (Exception e)
+            {
+                await ReplyAsync(e.Message + "\n" + e.StackTrace, false);
             }
         }
 
@@ -100,15 +104,12 @@ namespace echoBot
         [Alias("bot", "info")]
         public async Task BotInfoAsync([Remainder] string? _ = null)
         {
-            var e = new EmbedBuilder();
-            e.Color = Discord.Color.DarkPurple;
+            var e = Program.DefaultEmbed();
             e.Title = "echoBot";
             e.Description = "By Warp#8703";
             e.ThumbnailUrl = "https://cdn.discordapp.com/avatars/869399518267969556/7d05a852cbea15a1028540a913ae43b5.png?size=4096";
             e.Url = "https://warp.tf";
             e.AddField("Links", "[Discord](https://discord.gg/cfcFFECJ4X)\n[Source Code](https://github.com/WarpABoi/echoBot)");
-            e.Footer = CommandHandler.GetFooter();
-            e.WithCurrentTimestamp();
             // e.AddField("Field2", "FieldValue2");
             await ReplyAsync("", false, e.Build());
         }
@@ -117,15 +118,12 @@ namespace echoBot
         [Alias("pong")]
         public async Task PingAsync([Remainder] string? _ = null)
         {
-            var e = new EmbedBuilder();
-            e.Color = Discord.Color.DarkPurple;
+            var e = Program.DefaultEmbed();
             if (Context.Message.Content.StartsWith(Program.Config.prefix + "ping", true, null))
                 e.Title = "Pong!";
             else
                 e.Title = "Ping!";
             e.Description = $"{Context.Client.Latency}ms";
-            e.Footer = CommandHandler.GetFooter();
-            e.WithCurrentTimestamp();
             await ReplyAsync("", false, e.Build());
         }
         [Command("uptime")]

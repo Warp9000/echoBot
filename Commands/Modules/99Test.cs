@@ -27,6 +27,23 @@ namespace echoBot
                 await ReplyAsync("You are not the owner of this bot!");
             }
         }
+        [Command("delchannels")]
+        [Summary("Deletes channels that contain a certain string")]
+        [Alias("delch")]
+        public async Task DelChannelsAsync([Name("string")][Remainder] string? ch = null)
+        {
+            var executor = Context.User as Discord.WebSocket.SocketGuildUser;
+            if (!executor.GuildPermissions.ManageChannels)
+            {
+                await ReplyAsync("You don't have the permissions to do that!");
+                return;
+            }
+            var channels = Context.Guild.Channels.Where(x => x.Name.Contains(ch));
+            foreach (var channel in channels)
+            {
+                await channel.DeleteAsync();
+            }
+            await ReplyAsync("Done!");
+        }
     }
-
 }

@@ -2,10 +2,5 @@ Publish/
 Publish.bat
 bin/
 obj/
-config.json
-servers.json
-osu.json
+Data/
 logs/
-beatmap.json
-
-scores.json

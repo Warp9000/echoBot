@@ -53,6 +53,7 @@ public class Program
 
         _client.Log += Log;
 
+        Directory.CreateDirectory("Data");
         if (File.Exists("Data/config.json"))
         {
             Config = JsonConvert.DeserializeObject<GlobalConfig>(File.ReadAllText("Data/config.json"));
@@ -69,6 +70,7 @@ public class Program
         if (string.IsNullOrEmpty(Config.token))
         {
             l.Critical("Token is empty!", "MainAsync");
+            Console.ReadKey();
             return;
         }
         if (string.IsNullOrEmpty(Config.status))

@@ -1,1 +1,0 @@
-dotnet publish -o .\Publish\ --use-current-runtime --no-self-contained
